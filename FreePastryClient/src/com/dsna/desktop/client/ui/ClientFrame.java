@@ -586,8 +586,8 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		if (user==null)	{
 			
 		} else	{
-			this.textField_Accinfo_Username.setText(user.getUsername());
-			this.textField_Accinfo_Displayname.setText(user.getDisplayName());
+			this.textField_Accinfo_Username.setText(user.getOwnerUsername());
+			this.textField_Accinfo_Displayname.setText(user.getOwnerDisplayName());
 			this.textField_Accinfo_About.setText(user.getAbout());
 			this.textField_Accinfo_Tomessage.setText(user.getToDeliverMessageTopic());
 			this.textField_Accinfo_Newfeed.setText(user.getToFollowNotificationTopic());
@@ -613,8 +613,8 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			this.textField_Contact_Ipupdate.setText("");
 			this.textField_Contact_Wallid.setText("");			
 		} else	{
-			this.textField_Contact_Username.setText(profile.getUsername());
-			this.textField_Contact_Displayname.setText(profile.getDisplayName());
+			this.textField_Contact_Username.setText(profile.getOwnerUsername());
+			this.textField_Contact_Displayname.setText(profile.getOwnerDisplayName());
 			this.textField_Contact_About.setText(profile.getAbout());
 			this.textField_Contact_Tomessage.setText(profile.getToDeliverMessageTopic());
 			this.textField_Contact_Newfeeds.setText(profile.getToFollowNotificationTopic());
@@ -638,12 +638,12 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	
 	public void saveUserProfile()	{
 		SocialProfile user = serviceHandler.getUserProfile();
-		System.out.println("Save file to "+user.getUsername()+".dat");
-		FileUtil.writeObject(user.getUsername()+".dat", user);
-		System.out.println("Save last sequence to "+user.getUsername()+"_lastseq.dat");
+		System.out.println("Save file to "+user.getOwnerUsername()+".dat");
+		FileUtil.writeObject(user.getOwnerUsername()+".dat", user);
+		System.out.println("Save last sequence to "+user.getOwnerUsername()+"_lastseq.dat");
 		
 		HashMap<String,Long> topicsLastSeq = ((SocialServiceImpl)serviceHandler).getTopicsLastSeq();
-		FileUtil.writeObject(user.getUsername()+"_lastseq.dat", topicsLastSeq);
+		FileUtil.writeObject(user.getOwnerUsername()+"_lastseq.dat", topicsLastSeq);
 	}
 	
 	public HashMap<String,Long> loadTopicsCache(String fileName)	{

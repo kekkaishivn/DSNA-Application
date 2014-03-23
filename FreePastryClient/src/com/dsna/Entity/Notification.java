@@ -9,7 +9,7 @@ public class Notification extends BaseEntity {
 	private HashMap<String,String> arguments;
 	//private Set<String> toIds;
 	
-	public Notification(String ownerId, String timeStamp, String description, NotificationType type)	{
+	Notification(String ownerId, String timeStamp, String description, NotificationType type)	{
 		super(ownerId, timeStamp);
 		this.description = description;
 		this.type = type;

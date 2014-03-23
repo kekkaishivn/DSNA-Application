@@ -10,8 +10,6 @@ import com.dsna.util.DateTimeUtil;
 
 public class SocialProfile extends BaseEntity {
 	
-	private String displayName;
-	private String username;
 	private String birthDay;
 	private String about;
 	private String wallObjectId;
@@ -26,12 +24,8 @@ public class SocialProfile extends BaseEntity {
 		setToDeliverMessageTopic(ownerId+"_TODELIVERMESSAGE");
 		setToFollowNotificationTopic(ownerId+"_TOFOLLOWNOTIFICATION");
 		setToFollowRealIpTopic(ownerId+"_TOFOLLOWREALIP");
-		setDisplayName("USER1");
+		ownerUsername = "USER1";
 		friendProfiles = new HashMap<String, SocialProfile>();
-	}
-
-	public String getDisplayName() {
-	    return this.displayName;
 	}
 
 	public int getAge() {
@@ -64,18 +58,6 @@ public class SocialProfile extends BaseEntity {
 
 	public String getProfileImgUrl() {
 	    return this.profileImgUrl;
-	}
-
-	public String getUsername() {
-	    return this.username;
-	}
-
-	public void setUsername(String username) {
-	    this.username = username;
-	}
-
-	public void setDisplayName(String displayName) {
-	    this.displayName = displayName;
 	}
 
 	public void setBirthDay(String birthDay) {
@@ -146,7 +128,7 @@ public class SocialProfile extends BaseEntity {
 		HashMap<String, String> contacts = new HashMap<String, String>();
 		for (String friendId:friendProfiles.keySet())	{
 			SocialProfile friend = friendProfiles.get(friendId);
-			contacts.put(friend.username, friendId);
+			contacts.put(friend.ownerUsername, friendId);
 		}		
 		return contacts;
 	}
@@ -163,13 +145,13 @@ public class SocialProfile extends BaseEntity {
 			switch (type)	{
 				case NEWFEEDS: 
 					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
-							"Newfeed from "+username, type);
+							"Newfeed from "+ownerUsername, type);
 				case PROFILEUPDATE:
 					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
-							"Profile update from "+username, type);
+							"Profile update from "+ownerUsername, type);
 				case IPUPDATE:
 					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
-							"Ip update from "+username, type);
+							"Ip update from "+ownerUsername, type);
 				case NEWCOMMENT:
 					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
 							"New comment in "+ownerId, type);
@@ -182,7 +164,23 @@ public class SocialProfile extends BaseEntity {
 	}
 	
 	public Message createMessage(String content)	{
-		return new Message(ownerId, username, DateTimeUtil.getCurrentDateTime(), content);
+		Message msg = new Message(ownerId, ownerUsername, DateTimeUtil.getCurrentDateTime(), content);
+		msg.ownerDisplayName = ownerDisplayName;
+		return msg;
+	}
+	
+	public Status createStatus(String content)	{
+		Status status = new Status(ownerId, DateTimeUtil.getCurrentDateTime(), content);
+		status.ownerDisplayName = ownerDisplayName;
+		status.ownerUsername = ownerUsername;
+		return status;
+	}
+	
+	public Comment createComment(String content, String toObjectId)	{
+		Comment comment = new Comment(ownerId, DateTimeUtil.getCurrentDateTime(), content, toObjectId);
+		comment.ownerDisplayName = ownerDisplayName;
+		comment.ownerUsername = ownerUsername;
+		return comment;
 	}
 	
 	public boolean isCompatibleProfile(SocialProfile other)	{
@@ -213,12 +211,12 @@ public class SocialProfile extends BaseEntity {
 	
 	public static SocialProfile getSocialProfile(String username, PastryIdFactory idf)	{
 		SocialProfile dsp = new SocialProfile(idf.buildId(username).toStringFull(), DateTimeUtil.getCurrentDateTime());
-		dsp.setUsername(username);
-		dsp.setDisplayName("Daniel");
+		dsp.ownerUsername = username;
+		dsp.ownerDisplayName = "Daniel";
 		dsp.setToDeliverMessageTopic(idf.buildId(username+"_MESSAGE").toStringFull());
 		dsp.setToFollowNotificationTopic(idf.buildId(username+"_GETNOTIFY").toStringFull());
 		dsp.setToFollowRealIpTopic(idf.buildId(username+"_GETIP").toStringFull());
-		dsp.setWallObjectId(idf.buildId(dsp.getUsername()+"_WALL").toStringFull());
+		dsp.setWallObjectId(idf.buildId(dsp.ownerUsername+"_WALL").toStringFull());
 		return dsp;
 	}
 

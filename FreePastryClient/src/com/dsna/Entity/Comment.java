@@ -7,7 +7,7 @@ public class Comment extends BaseEntity {
 	private String content;
 	private String toObjectId;
 	
-	public Comment(String ownerId, String timeStamp, String content, String toObjectId)	{
+	Comment(String ownerId, String timeStamp, String content, String toObjectId)	{
 		super(ownerId, timeStamp);
 		this.content = content;
 		this.toObjectId = toObjectId;

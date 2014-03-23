@@ -4,7 +4,7 @@ public class Status extends BaseEntity {
 	
 	private String content;
 	
-	public Status(String ownerId, String timeStamp, String content)	{
+	Status(String ownerId, String timeStamp, String content)	{
 		super(ownerId, timeStamp);
 		this.content = content;
 	}

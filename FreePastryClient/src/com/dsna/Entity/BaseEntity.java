@@ -8,6 +8,8 @@ abstract public class BaseEntity implements Serializable {
 	
 	String timeStamp;
 	String ownerId;
+	String ownerDisplayName;
+	String ownerUsername;
 	
 	protected BaseEntity(String ownerId, String timeStamp)	{
 		this.ownerId = ownerId;
@@ -17,4 +19,19 @@ abstract public class BaseEntity implements Serializable {
 	abstract public boolean isHigherPriority(BaseEntity other);
 	abstract public String getTypeName();
 
+	public String getOwnerDisplayName() {
+	    return this.ownerDisplayName;
+	}
+
+	public String getOwnerUsername() {
+	    return this.ownerUsername;
+	}
+
+	public String getTimeStamp() {
+	    return this.timeStamp;
+	}
+
+	public void setOwnerDisplayName(String ownerDisplayName) {
+	    this.ownerDisplayName = ownerDisplayName;
+	}
 }
