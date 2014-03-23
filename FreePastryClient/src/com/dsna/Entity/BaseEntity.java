@@ -6,12 +6,12 @@ abstract public class BaseEntity implements Serializable {
 
 	static final long serialVersionUID = 5098466384372731320L;	
 	
-	String timeStamp;
+	long timeStamp;
 	String ownerId;
 	String ownerDisplayName;
 	String ownerUsername;
 	
-	protected BaseEntity(String ownerId, String timeStamp)	{
+	protected BaseEntity(String ownerId, long timeStamp)	{
 		this.ownerId = ownerId;
 		this.timeStamp = timeStamp;
 	}	
@@ -27,7 +27,7 @@ abstract public class BaseEntity implements Serializable {
 	    return this.ownerUsername;
 	}
 
-	public String getTimeStamp() {
+	public long getTimeStamp() {
 	    return this.timeStamp;
 	}
 
