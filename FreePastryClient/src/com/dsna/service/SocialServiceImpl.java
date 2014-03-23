@@ -42,7 +42,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	private DSNAScribeClient broadcaster;
 	private SocialEventListener eventListener;
 	private PastryIdFactory idf;
-	private SocialProfile user;
+	private SocialProfile userProfile;
 	private HashMap<String,Long> topicsLastSeq = new HashMap<String,Long>();
 	
 	protected SocialServiceImpl(PastryNode pastryNode, SocialEventListener eventListener) throws IOException, InterruptedException, JoinFailedException	{
@@ -80,7 +80,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	
 	@Override
 	public void postStatus(String status) {
-		Id statusId = idf.buildId(status + user.getUsername());
+		Id statusId = idf.buildId(status + userProfile.getOwnerUsername());
 		postStatus(statusId, status);
 	}
 	
@@ -91,16 +91,16 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 	
 	protected void postStatus(final Id statusId, final String status) {
-		String myUserName = user.getUsername();
-		Status theStatus = new Status(myUserName, DateTimeUtil.getCurrentDateTime(), status);
+		String myUserName = userProfile.getOwnerUsername();
+		Status theStatus = userProfile.createStatus(status);
 		storageHandler.insert(new DSNAPastContent(statusId, theStatus, GCPast.INFINITY_EXPIRATION), new Continuation<Boolean[], Exception>() {
       // the result is an Array of Booleans for each insert
       public void receiveResult(Boolean[] results) {          
-    		Notification notification = user.createNotification(NotificationType.NEWFEEDS);
+    		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
     		notification.setDescription(statusId.toStringFull());
     		System.out.println(statusId.toStringFull());
     		notification.setArgument("objectId", statusId.toStringFull());
-    		broadcaster.publish(user.getToFollowNotificationTopic(), notification, true);
+    		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);
       }
 
       public void receiveException(Exception result) {
@@ -113,8 +113,8 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	@Override
 	public boolean sendMessage(String friendId, String msg) {
 		// TODO Auto-generated method stub
-		String topicId = user.getFriendsToDeliverMessageTopic(friendId);
-		Message message = user.createMessage(msg);
+		String topicId = userProfile.getFriendsToDeliverMessageTopic(friendId);
+		Message message = userProfile.createMessage(msg);
 		if (topicId!=null)	{
 			broadcaster.publish(topicId, message, true);
 			return true;
@@ -161,21 +161,21 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	
 	private void setSocialProfile(SocialProfile user)	{
 		if (user==null) user = defaultSocialProfile();
-		this.user = user;
+		this.userProfile = user;
 	}
 	
 	public void initSubscribe()	{
 		System.out.println("init subscribe");
-		Collection<String> cachingTopics = user.getFriendsToFollowNotificationTopics();
-		Collection<String> noncachingTopics = user.getFriendsToFollowRealIpTopics();
+		Collection<String> cachingTopics = userProfile.getFriendsToFollowNotificationTopics();
+		Collection<String> noncachingTopics = userProfile.getFriendsToFollowRealIpTopics();
 		broadcaster.subscribeToNoncacheTopics(noncachingTopics);		
-		cachingTopics.add(user.getToDeliverMessageTopic());
+		cachingTopics.add(userProfile.getToDeliverMessageTopic());
 		broadcaster.subscribeToCacheTopics(cachingTopics, topicsLastSeq);
 	}
 	
 	public void destroy()	{
 		pastryNode.destroy();
-		user = null;
+		userProfile = null;
 	}
 
 	@Override
@@ -185,27 +185,27 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 	
 	public SocialProfile getUserProfile()	{
-		return user;
+		return userProfile;
 	}
 
 	@Override
 	public void updateProfile(SocialProfile edittedProfile) {
 		// TODO Auto-generated method stub
-		if (user.isCompatibleProfile(edittedProfile))	{
-			user = edittedProfile;
+		if (userProfile.isCompatibleProfile(edittedProfile))	{
+			userProfile = edittedProfile;
 		}
 		pushProfileToDHT();
 	}
 
 	@Override
 	public void pushProfileToDHT() {
-		storageHandler.insert(new DSNAPastContent(idf.buildIdFromToString(user.getUserId()), user, GCPast.INFINITY_EXPIRATION));		
+		storageHandler.insert(new DSNAPastContent(idf.buildIdFromToString(userProfile.getUserId()), userProfile, GCPast.INFINITY_EXPIRATION));		
 	}
 
 	@Override
 	public boolean addFriend(SocialProfile friend) {
 		// TODO Auto-generated method stub
-		if (user.addFriend(friend))	{
+		if (userProfile.addFriend(friend))	{
 			broadcaster.subscribe(friend.getToFollowRealIpTopic(), Topic.SEQ_IGNORE);
 			broadcaster.subscribe(friend.getToFollowNotificationTopic(), Topic.SEQ_IGNORE);
 			return true;
@@ -328,7 +328,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	@Override
 	public HashMap<String, String> getFriendsContacts() {
 		// TODO Auto-generated method stub
-		return user.getFriendsContacts();
+		return userProfile.getFriendsContacts();
 	}
 
 	public HashMap<String, Long> getTopicsLastSeq() {
