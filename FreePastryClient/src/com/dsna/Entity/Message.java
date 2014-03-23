@@ -1,9 +1,8 @@
 package com.dsna.Entity;
 
-import java.util.Set;
-
 public class Message extends BaseEntity {
 
+	static final long serialVersionUID = 987234019735861344L;		
 	private String content;
 	private String ownerName;
 	

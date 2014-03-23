@@ -10,6 +10,8 @@ import com.dsna.util.DateTimeUtil;
 
 public class SocialProfile extends BaseEntity {
 	
+	static final long serialVersionUID = 176342932409324L;	
+	
 	private String birthDay;
 	private String about;
 	private String wallObjectId;
