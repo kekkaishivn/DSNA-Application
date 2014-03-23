@@ -215,7 +215,9 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 
 	@Override
 	public void receiveLookupResult(PastContent result) {
-		// TODO Auto-generated method stub
+		
+		if (eventListener == null) return;
+		
 		if (result == null)	{
 			eventListener.receiveLookupNull();
 			return;
@@ -237,6 +239,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 
 	@Override
 	public void receiveLookupException(Exception result) {
+		if (eventListener == null) return;
 		eventListener.receiveLookupException(result);
 	}
 
@@ -247,6 +250,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 
 	@Override
 	public void receiveInsertException(Exception result) {
+		if (eventListener == null) return;
 		eventListener.receiveInsertException(result);
 	}
 
@@ -282,15 +286,16 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 			
 			// Pass entity to event listener
 			BaseEntity msg = sc.getMessage();
-			switch (msg.getTypeName())	{
-				case "Message":
-					eventListener.receiveMessage((Message)msg);
-					break;
-				case "Notification":
-					eventListener.receiveNotification((Notification)msg);
-					break;
-				default:
-			}
+			if (eventListener != null) 
+				switch (msg.getTypeName())	{
+					case "Message":
+						eventListener.receiveMessage((Message)msg);
+						break;
+					case "Notification":
+						eventListener.receiveNotification((Notification)msg);
+						break;
+					default:
+				}
 		}
 		
 		if (content instanceof DSNAScribeCollectionContent)	{
