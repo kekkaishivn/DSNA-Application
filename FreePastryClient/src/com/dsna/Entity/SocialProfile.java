@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import rice.pastry.commonapi.PastryIdFactory;
+
 import com.dsna.util.DateTimeUtil;
 
 public class SocialProfile extends BaseEntity {
@@ -207,6 +209,17 @@ public class SocialProfile extends BaseEntity {
 	
 	public String toString()	{
 		return this.friendProfiles.toString();
+	}
+	
+	public static SocialProfile getSocialProfile(String username, PastryIdFactory idf)	{
+		SocialProfile dsp = new SocialProfile(idf.buildId(username).toStringFull(), DateTimeUtil.getCurrentDateTime());
+		dsp.setUsername(username);
+		dsp.setDisplayName("Daniel");
+		dsp.setToDeliverMessageTopic(idf.buildId(username+"_MESSAGE").toStringFull());
+		dsp.setToFollowNotificationTopic(idf.buildId(username+"_GETNOTIFY").toStringFull());
+		dsp.setToFollowRealIpTopic(idf.buildId(username+"_GETIP").toStringFull());
+		dsp.setWallObjectId(idf.buildId(dsp.getUsername()+"_WALL").toStringFull());
+		return dsp;
 	}
 
 }

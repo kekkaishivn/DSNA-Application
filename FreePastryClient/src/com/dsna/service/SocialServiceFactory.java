@@ -3,7 +3,9 @@ package com.dsna.service;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 
+import com.dsna.Entity.SocialProfile;
 import com.dsna.dht.past.DSNAPastClient;
 import com.dsna.dht.past.DSNAPastFactory;
 import com.dsna.dht.scribe.DSNAScribeClient;
@@ -14,6 +16,7 @@ import rice.pastry.JoinFailedException;
 import rice.pastry.NodeIdFactory;
 import rice.pastry.PastryNode;
 import rice.pastry.PastryNodeFactory;
+import rice.pastry.commonapi.PastryIdFactory;
 import rice.pastry.socket.SocketPastryNodeFactory;
 import rice.pastry.socket.internet.InternetPastryNodeFactory;
 import rice.pastry.standard.RandomNodeIdFactory;
@@ -26,7 +29,13 @@ public class SocialServiceFactory {
 		this.env = env;
 	}	
 	
-	public SocialService newDSNASocialService(int bindPort, int bootPort, String bootIP, SocialEventListener uiUpdater, String username) throws IOException, InterruptedException, JoinFailedException	{
+	public SocialService newDSNASocialService(int bindPort, int bootPort, String bootIP, SocialEventListener eventListener, String username) throws IOException, InterruptedException, JoinFailedException	{
+		PastryIdFactory idf = new rice.pastry.commonapi.PastryIdFactory(env);
+		SocialProfile user = SocialProfile.getSocialProfile(username, idf);
+		return newDSNASocialService(bindPort, bootPort, bootIP, eventListener, user, new HashMap<String,Long>() );
+	}
+	
+	public SocialService newDSNASocialService(int bindPort, int bootPort, String bootIP, SocialEventListener eventListener, SocialProfile user, HashMap<String,Long> lastSeqs) throws IOException, InterruptedException, JoinFailedException	{
 		DSNAScribeFactory scribeFactory = new DSNAScribeFactory(env);
 		DSNAPastFactory pastFactory = new DSNAPastFactory(env);
 		
@@ -41,7 +50,7 @@ public class SocialServiceFactory {
 	    PastryNode pastryNode = factory.newNode();
 	    
 	    // Create social service node
-	    SocialServiceImpl theService = new SocialServiceImpl(username, pastryNode, uiUpdater);
+	    SocialServiceImpl theService = new SocialServiceImpl(user, lastSeqs, pastryNode, eventListener);
 	    
 	    InetSocketAddress bootAddress = new InetSocketAddress(InetAddress.getByName(bootIP), bootPort);
 	    

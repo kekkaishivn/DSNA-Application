@@ -65,19 +65,17 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		setSocialProfile(user);
 	}
 	
+	public SocialServiceImpl(SocialProfile user, HashMap<String,Long> lastSeqs, PastryNode pastryNode, SocialEventListener uiUpdater) throws IOException, InterruptedException, JoinFailedException	{
+		this(pastryNode, uiUpdater);
+		setSocialProfile(user);
+		setTopicsLastSeq(lastSeqs);
+	}
+	
 	public SocialServiceImpl(String username, PastryNode pastryNode, SocialEventListener uiUpdater) throws IOException, InterruptedException, JoinFailedException	{
 		this(pastryNode, uiUpdater);
-		SocialProfile profile = loadUserProfile(username+".dat");
-		profile = (profile==null ? getSocialProfile(username) : profile);
-
+		SocialProfile profile = null;
+		profile = SocialProfile.getSocialProfile(username, idf);
 		setSocialProfile(profile);
-		
-		HashMap<String,Long> lastSeqs = this.loadTopicsCache(username+"_lastseq.dat");
-		System.out.println(lastSeqs);
-		if (lastSeqs!=null)
-			topicsLastSeq = lastSeqs;
-		
-		System.out.println(topicsLastSeq);
 	}
 	
 	@Override
@@ -158,18 +156,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 	
 	public SocialProfile defaultSocialProfile()	{
-		return getSocialProfile("Anonymous");
-	}
-	
-	public SocialProfile getSocialProfile(String username)	{
-		SocialProfile dsp = new SocialProfile(idf.buildId(username).toStringFull(), DateTimeUtil.getCurrentDateTime());
-		dsp.setUsername(username);
-		dsp.setDisplayName("Daniel");
-		dsp.setToDeliverMessageTopic(idf.buildId(username+"_MESSAGE").toStringFull());
-		dsp.setToFollowNotificationTopic(idf.buildId(username+"_GETNOTIFY").toStringFull());
-		dsp.setToFollowRealIpTopic(idf.buildId(username+"_GETIP").toStringFull());
-		dsp.setWallObjectId(idf.buildId(dsp.getUsername()+"_WALL").toStringFull());
-		return dsp;
+		return SocialProfile.getSocialProfile("Anonymous", idf);
 	}
 	
 	private void setSocialProfile(SocialProfile user)	{
@@ -194,46 +181,11 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	@Override
 	public void logout() {
 		// TODO Auto-generated method stub
-		System.out.println("Logout");
-		saveUserProfile();
 		destroy();
-	}
-	
-	public void saveUserProfile()	{
-		System.out.println("Save file to "+user.getUsername()+".dat");
-		FileUtil.writeObject(user.getUsername()+".dat", user);
-		System.out.println("Save last sequence to "+user.getUsername()+"_lastseq.dat");
-		FileUtil.writeObject(user.getUsername()+"_lastseq.dat", topicsLastSeq);
 	}
 	
 	public SocialProfile getUserProfile()	{
 		return user;
-	}
-	
-	private SocialProfile loadUserProfile(String fileName)	{
-		Object object = FileUtil.readObject(fileName);
-		SocialProfile profile;
-		if (object!=null)	{
-			try	{
-				profile = (SocialProfile) object;
-				return profile;
-			} catch (Exception e)	{
-				return null;
-			}
-		} else return null;
-	}
-	
-	private HashMap<String,Long> loadTopicsCache(String fileName)	{
-		Object object = FileUtil.readObject(fileName);
-		HashMap<String,Long> lastSeqs;
-		if (object!=null)	{
-			try	{
-				lastSeqs = (HashMap<String,Long>) object;
-				return lastSeqs;
-			} catch (Exception e)	{
-				return null;
-			}
-		} else return null;
 	}
 
 	@Override
@@ -372,6 +324,17 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	public HashMap<String, String> getFriendsContacts() {
 		// TODO Auto-generated method stub
 		return user.getFriendsContacts();
+	}
+
+	public HashMap<String, Long> getTopicsLastSeq() {
+		// TODO Auto-generated method stub
+		return (HashMap<String, Long>)topicsLastSeq.clone();
+	}
+	
+	public void setTopicsLastSeq(HashMap<String, Long> topicsLastSeq) {
+		// TODO Auto-generated method stub
+		if (topicsLastSeq!=null)
+			this.topicsLastSeq = new HashMap<String, Long>(topicsLastSeq);
 	}
 
 }

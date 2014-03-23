@@ -54,6 +54,7 @@ import com.dsna.service.SocialService;
 import com.dsna.service.SocialServiceFactory;
 import com.dsna.service.SocialServiceImpl;
 import com.dsna.service.SocialEventListener;
+import com.dsna.util.FileUtil;
 import com.dsna.util.NetworkUtil;
 
 import java.awt.event.ActionListener;
@@ -105,6 +106,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				System.out.println("Closing window");
+				ClientFrame.this.saveUserProfile();
 				ClientFrame.this.serviceHandler.logout();
 			}
 		});
@@ -175,14 +177,21 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		    env.getParameters().setString("firewall_test_policy","always");
 		    env.getParameters().setBoolean("probe_for_external_address", false);
 		    env.getParameters().setBoolean("epost_nat_support", false);
-		    env.getParameters().remove("external_address");
+		    env.getParameters().setString("external_address", "83.180.236.252:12345");
 		    //env.getParameters().remove("nat_handler_class");
 				SocialServiceFactory factory = new SocialServiceFactory(env);
 				try {
-					serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, getUsername());
+					String username = getUsername();
+					SocialProfile user = ClientFrame.this.loadUserProfile(username+".dat");
+					HashMap<String,Long> lastSeqs = ClientFrame.this.loadTopicsCache(username+"_lastseq.dat");
+					if (user==null)
+						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, username);
+					else
+						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, user, lastSeqs);
 					System.out.println(serviceHandler);
 					updateAccountInfo();
 					serviceHandler.initSubscribe();
+					serviceHandler.pushProfileToDHT();
 					ClientFrame.this.updateFriendList();
 					ClientFrame.this.btnLaunch.setEnabled(false);
 					ClientFrame.this.tabbedPane.setSelectedIndex(1);
@@ -612,6 +621,42 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			this.textField_Contact_Ipupdate.setText(profile.getToFollowRealIpTopic());
 			this.textField_Contact_Wallid.setText(profile.getWallObjectId());
 		}
+	}
+	
+	private SocialProfile loadUserProfile(String fileName)	{
+		Object object = FileUtil.readObject(fileName);
+		SocialProfile profile;
+		if (object!=null)	{
+			try	{
+				profile = (SocialProfile) object;
+				return profile;
+			} catch (Exception e)	{
+				return null;
+			}
+		} else return null;
+	}
+	
+	public void saveUserProfile()	{
+		SocialProfile user = serviceHandler.getUserProfile();
+		System.out.println("Save file to "+user.getUsername()+".dat");
+		FileUtil.writeObject(user.getUsername()+".dat", user);
+		System.out.println("Save last sequence to "+user.getUsername()+"_lastseq.dat");
+		
+		HashMap<String,Long> topicsLastSeq = ((SocialServiceImpl)serviceHandler).getTopicsLastSeq();
+		FileUtil.writeObject(user.getUsername()+"_lastseq.dat", topicsLastSeq);
+	}
+	
+	public HashMap<String,Long> loadTopicsCache(String fileName)	{
+		Object object = FileUtil.readObject(fileName);
+		HashMap<String,Long> lastSeqs;
+		if (object!=null)	{
+			try	{
+				lastSeqs = (HashMap<String,Long>) object;
+				return lastSeqs;
+			} catch (Exception e)	{
+				return null;
+			}
+		} else return null;
 	}
 
 	@Override
