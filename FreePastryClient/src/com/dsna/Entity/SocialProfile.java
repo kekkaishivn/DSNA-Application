@@ -146,19 +146,19 @@ public class SocialProfile extends BaseEntity {
 	public Notification createNotification(NotificationType type)	{
 			switch (type)	{
 				case NEWFEEDS: 
-					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
+					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"Newfeed from "+ownerUsername, type);
 				case PROFILEUPDATE:
-					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
+					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"Profile update from "+ownerUsername, type);
 				case IPUPDATE:
-					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
+					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"Ip update from "+ownerUsername, type);
 				case NEWCOMMENT:
-					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
+					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"New comment in "+ownerId, type);
 				case NEWLIKE:
-					return new Notification(ownerId, DateTimeUtil.getCurrentDateTime(),
+					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"New like in "+ownerId, type);
 				default:
 					return null;
@@ -166,20 +166,20 @@ public class SocialProfile extends BaseEntity {
 	}
 	
 	public Message createMessage(String content)	{
-		Message msg = new Message(ownerId, ownerUsername, DateTimeUtil.getCurrentDateTime(), content);
+		Message msg = new Message(ownerId, ownerUsername, DateTimeUtil.getCurrentTimeStamp(), content);
 		msg.ownerDisplayName = ownerDisplayName;
 		return msg;
 	}
 	
 	public Status createStatus(String content)	{
-		Status status = new Status(ownerId, DateTimeUtil.getCurrentDateTime(), content);
+		Status status = new Status(ownerId, DateTimeUtil.getCurrentTimeStamp(), content);
 		status.ownerDisplayName = ownerDisplayName;
 		status.ownerUsername = ownerUsername;
 		return status;
 	}
 	
 	public Comment createComment(String content, String toObjectId)	{
-		Comment comment = new Comment(ownerId, DateTimeUtil.getCurrentDateTime(), content, toObjectId);
+		Comment comment = new Comment(ownerId, DateTimeUtil.getCurrentTimeStamp(), content, toObjectId);
 		comment.ownerDisplayName = ownerDisplayName;
 		comment.ownerUsername = ownerUsername;
 		return comment;
@@ -212,7 +212,7 @@ public class SocialProfile extends BaseEntity {
 	}
 	
 	public static SocialProfile getSocialProfile(String username, PastryIdFactory idf)	{
-		SocialProfile dsp = new SocialProfile(idf.buildId(username).toStringFull(), DateTimeUtil.getCurrentDateTime());
+		SocialProfile dsp = new SocialProfile(idf.buildId(username).toStringFull(), DateTimeUtil.getCurrentTimeStamp());
 		dsp.ownerUsername = username;
 		dsp.ownerDisplayName = "Daniel";
 		dsp.setToDeliverMessageTopic(idf.buildId(username+"_MESSAGE").toStringFull());
