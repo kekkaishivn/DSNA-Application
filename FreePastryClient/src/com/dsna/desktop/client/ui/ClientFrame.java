@@ -2,6 +2,8 @@ package com.dsna.desktop.client.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -624,39 +626,51 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	}
 	
 	private SocialProfile loadUserProfile(String fileName)	{
-		Object object = FileUtil.readObject(fileName);
-		SocialProfile profile;
-		if (object!=null)	{
-			try	{
-				profile = (SocialProfile) object;
-				return profile;
-			} catch (Exception e)	{
-				return null;
-			}
-		} else return null;
+		try	{
+			FileInputStream fis = new FileInputStream(fileName);
+			Object object = FileUtil.readObject(fis);
+			SocialProfile profile;
+			if (object!=null)	{
+					profile = (SocialProfile) object;
+					return profile;
+			} 
+			return null;
+		} catch (Exception ex)	{
+			return null;
+		}
 	}
 	
 	public void saveUserProfile()	{
-		SocialProfile user = serviceHandler.getUserProfile();
-		System.out.println("Save file to "+user.getOwnerUsername()+".dat");
-		FileUtil.writeObject(user.getOwnerUsername()+".dat", user);
-		System.out.println("Save last sequence to "+user.getOwnerUsername()+"_lastseq.dat");
-		
-		HashMap<String,Long> topicsLastSeq = ((SocialServiceImpl)serviceHandler).getTopicsLastSeq();
-		FileUtil.writeObject(user.getOwnerUsername()+"_lastseq.dat", topicsLastSeq);
+		try	{
+			SocialProfile user = serviceHandler.getUserProfile();
+			String profileFileName = user.getOwnerUsername()+".dat";
+			FileOutputStream fout = new FileOutputStream(profileFileName, false);
+			System.out.println("Save file to "+profileFileName);
+			FileUtil.writeObject(fout, user);
+			
+			String lastSeqFileName = user.getOwnerUsername()+"_lastseq.dat";
+			System.out.println("Save last sequence to "+lastSeqFileName);
+			fout = new FileOutputStream(lastSeqFileName, false);
+			HashMap<String,Long> topicsLastSeq = ((SocialServiceImpl)serviceHandler).getTopicsLastSeq();
+			FileUtil.writeObject(fout, topicsLastSeq);
+		} catch (Exception ex)	{
+			ex.printStackTrace();
+		}
 	}
 	
 	public HashMap<String,Long> loadTopicsCache(String fileName)	{
-		Object object = FileUtil.readObject(fileName);
-		HashMap<String,Long> lastSeqs;
-		if (object!=null)	{
-			try	{
-				lastSeqs = (HashMap<String,Long>) object;
-				return lastSeqs;
-			} catch (Exception e)	{
-				return null;
-			}
-		} else return null;
+		try	{
+			FileInputStream fis = new FileInputStream(fileName);
+			Object object = FileUtil.readObject(fis);
+			HashMap<String,Long> lastSeqs;
+			if (object!=null)	{
+					lastSeqs = (HashMap<String,Long>) object;
+					return lastSeqs;
+			} 
+			return null;
+		} catch (Exception ex)	{
+			return null;
+		}
 	}
 
 	@Override
