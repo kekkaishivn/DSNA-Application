@@ -6,7 +6,7 @@ public class Message extends BaseEntity {
 	private String content;
 	private String ownerName;
 	
-	Message(String ownerId, String ownerName, String timeStamp, String content)	{
+	Message(String ownerId, String ownerName, long timeStamp, String content)	{
 		super(ownerId, timeStamp);
 		this.content = content;
 		this.ownerName = ownerName;

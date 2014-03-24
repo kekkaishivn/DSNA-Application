@@ -7,7 +7,7 @@ public class IpUpdateNotification extends Notification {
 	private String status;
 	private String ipaddress;
 
-	public IpUpdateNotification(String ownerId, String timeStamp,
+	public IpUpdateNotification(String ownerId, long timeStamp,
 			String description, NotificationType type) {
 		super(ownerId, timeStamp, description, type);
 	}	

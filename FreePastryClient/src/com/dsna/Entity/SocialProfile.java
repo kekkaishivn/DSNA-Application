@@ -21,7 +21,7 @@ public class SocialProfile extends BaseEntity {
 	private String profileImgUrl;
 	private HashMap<String, SocialProfile> friendProfiles;
 
-	public SocialProfile(String ownerId, String timeStamp) {
+	public SocialProfile(String ownerId, long timeStamp) {
 		super(ownerId, timeStamp);
 		setToDeliverMessageTopic(ownerId+"_TODELIVERMESSAGE");
 		setToFollowNotificationTopic(ownerId+"_TOFOLLOWNOTIFICATION");
