@@ -271,18 +271,23 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		// TODO Auto-generated method stub
 		
 	}
+	
+	long getTopicLastSeq(String topicId)	{
+		if (topicsLastSeq.get(topicId)==null) return -1;
+		else return topicsLastSeq.get(topicId);
+	}
 
 	@Override
 	public void deliver(Topic topic, ScribeContent content) {
 		if (content instanceof DSNAScribeContent)	{
 			DSNAScribeContent sc = (DSNAScribeContent)content;
-
+			
 			// Update lastSeq of the correspond topic
-			if (topic.isCaching())	{
-				topicsLastSeq.put( topic.getId().toStringFull(), sc.getSeq());
+			if (topic.isCaching() && getTopicLastSeq(topic.getId().toStringFull()) < sc.getSeq())	{
+				topicsLastSeq.put(topic.getId().toStringFull(), sc.getSeq());
 				System.out.println(topicsLastSeq);
 				System.out.println(topic.getId().toStringFull());
-			}
+			} else return;
 			
 			// Pass entity to event listener
 			BaseEntity msg = sc.getMessage();

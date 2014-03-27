@@ -49,6 +49,11 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
   public final int MESSAGE_TIMEOUT;
   
   /**
+   * the interval with which the node is waiting for replicas response from pull request
+   */
+  public final int PULL_REPLICATE_INTERVAL = 5000;
+  
+  /**
    * the number of replication caching factor in root topic
    */
   public final int REPLICATE_FACTOR = 6;
@@ -568,7 +573,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
             // print leafset
             logger.log(node.printRouteState());
           }
-        }
+        } 
       }
       
       List<Topic> theTopics = manifest.get(handle);
@@ -602,6 +607,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
       if (logger.level <= Logger.FINE) logger.log("ackMessageReceived("+message+") for unknown id");
     } else {
       ScribeMultiClient multiClient = slm.getClient();
+      
       if (multiClient != null) multiClient.subscribeSuccess(message.getTopics());
       if (slm.topicsAcked(message.getTopics())) {      
         if (logger.level <= Logger.FINER) {
@@ -743,6 +749,36 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
     doSubscribe(theTopics, client, toRawScribeContent(content), hint);       
   }
   public void subscribe(Collection<Topic> theTopics, ScribeMultiClient client, RawScribeContent content, NodeHandle hint) {
+  	final ScribeMultiClient contentReceiver = client;
+  	for (final Topic topic : theTopics)	{
+  		if (topic.isCaching() && isRoot(topic))	{
+  			System.out.println("Hehehehe: "+topic.toString());
+  	  	// If is root and have no caches, try ask the replicate node first
+  	    // otherwise, send the missing contents normally
+  	    List<ScribeContent> cache = publishedCaches.get(topic);
+  	  	if (cache==null && isRoot(topic))	{
+
+  	    	Runnable cachingWorker = new Runnable() {
+  	        public void run() {    
+  	        	if (!isPullingReplica(topic))
+  	        		pullReplica(topic);
+  	        		if (contentReceiver instanceof ScribeReliableMultiClient)	{
+  	        			 DSNAScribeCollectionContent missingContents = ScribeReliableImpl.this.getMissingContents(topic);
+  	        			 if (missingContents != null)
+  	        				 ((ScribeReliableMultiClient)contentReceiver).contentsReceived(missingContents.getContents(), topic);
+  	        		}
+  	        }
+  	    	};
+  	  		(new Thread(cachingWorker)).start();  	
+/*  	  		try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}*/
+  	  	}
+  		}
+  	}
     doSubscribe(theTopics, client, content, hint);         
   }
   
@@ -777,6 +813,8 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
           topicManagers.put(topic, manager);
           implicitRoots.remove(topic);
           toSubscribe.add(topic);
+          
+        	
         } else {
           if ((manager.getParent() == null) && (! isRoot(topic))) {
             toSubscribe.add(topic);
@@ -939,6 +977,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
    * @param child The child to add
    */
   public void addChild(Topic topic, NodeHandle child) {
+
     if (addChildHelper(topic, child)) {
       // a new TopicManager was created
       subscribe(Collections.singletonList(topic), null, maintenancePolicy.implicitSubscribe(Collections.singletonList(topic)), null); 
@@ -1020,14 +1059,22 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
   		final Topic theTopic = topic;
   		final NodeHandle theChild = child;
     	Runnable cachingWorker = new Runnable() {
-        public void run() {    
-        	pullReplica(theTopic);
+        public void run() {  
+        	if (!isPullingReplica(theTopic))
+        		pullReplica(theTopic);
+        	else	{
+        		try {
+							Thread.sleep(PULL_REPLICATE_INTERVAL);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+        	}
         	sendMissingContents(theTopic, theChild);
         }
     	};
   		(new Thread(cachingWorker)).start();  		
   	} else sendMissingContents(topic, child);
-    
 
     // and lastly notify the policy and all of the clients
     policy.childAdded(topic, child);
@@ -1041,7 +1088,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
 
   private void sendMissingContents(Topic topic, NodeHandle child) {
 		// TODO Auto-generated method stub
-  	System.out.println("Send the missing contents");
+  	System.out.println("Send the missing contents"+topic.toString());
   	DSNAScribeCollectionContent theMissingContents = getMissingContents(topic);
   	if (theMissingContents!=null)	{
   		endpoint.route(null, new PublishMessage(localHandle, topic, theMissingContents), child);
@@ -1543,6 +1590,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
     if (sMessage.getSource().getId().equals(endpoint.getId())) {
       if(logger.level <= Logger.INFO) logger.log(
           "Bypassing forward logic of subscribemessage "+sMessage+" because local node is the subscriber source.");
+      
       return true;
     }
     
@@ -1656,10 +1704,10 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
         
           if (logger.level <= Logger.FINER) logger.log("Hijacking subscribe message from " +
             sMessage.getSubscriber() + " for topic " + topic);
-    
+
           // if so, add the child
           if (addChildHelper(topic, sMessage.getSubscriber())) {
-            // the child implicitly created a topic, need to subscribe   
+            // the child implicitly created a topic, need to subscribe 
             newTopics.add(topic);
           }
         }
@@ -2120,7 +2168,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
       System.out.println("Received replicate contents message from root " + rcMsg.getSource()+ " for topic " + rcMsg.getTopic());
       Topic theTopic = rcMsg.getTopic();
       if (theTopic.isCaching())	{
-      	if (isRoot(theTopic)) {      		
+      	if (isRoot(theTopic) && isPullingReplica(theTopic)) {      		
       		synchronized (replicaManager)	{
       			ArrayList<DSNAScribeCollectionContent> replicaSet = replicaManager.get(theTopic);
       			replicaSet.add((DSNAScribeCollectionContent)rcMsg.getContent());
@@ -2214,40 +2262,49 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
   	}
   }
   
+  private boolean isPullingReplica(Topic topic)	{
+  	return replicaManager.get(topic)!=null;
+  }
+  
   private boolean pullReplica(Topic topic)	{
   	if (!isRoot(topic)) return false;
-  	System.out.println("Pull replica: pass is root");
-  	synchronized (publishedCaches)	{
-	    NodeHandleSet replicationSet = endpoint.replicaSet(topic.getId(), REPLICATE_FACTOR);
-	    if (replicationSet==null)	return false;
-	    System.out.println("Pull replica: pass replica set");
-	    topic.setSeq(Topic.SEQ_CACHE_NULL);
+  	System.out.println("Pull replica: "+topic.toString());
+  	
+    NodeHandleSet replicationSet = endpoint.replicaSet(topic.getId(), REPLICATE_FACTOR);
+    if (replicationSet==null)	return false;
+    topic.setSeq(Topic.SEQ_CACHE_NULL);
+    
+  	synchronized (replicaManager)	{
 	    replicaManager.remove(topic);
 	    replicaManager.put(topic, new ArrayList<DSNAScribeCollectionContent>());
-	    
-	  	replicationSet.removeHandle(getId());
-	  	for (int i=0; i<replicationSet.size(); i++)	{
-	  		NodeHandle theNode = replicationSet.getHandle(i);
-	  		endpoint.route(null, new ReplicatePullReqMessage(localHandle, topic), theNode);
-	  	}
-	  	
-			// Waiting for the result
-			try {
-				Thread.sleep(10000);     
-			} catch (InterruptedException e) {
-			}
+  	}
+    
+  	replicationSet.removeHandle(getId());
+  	for (int i=0; i<replicationSet.size(); i++)	{
+  		NodeHandle theNode = replicationSet.getHandle(i);
+  		endpoint.route(null, new ReplicatePullReqMessage(localHandle, topic), theNode);
+  	}
+  	
+		// Waiting for the reply of replicas node
+		try {
+			Thread.sleep(PULL_REPLICATE_INTERVAL);     
+		} catch (InterruptedException e) {
+		}
 
-			ArrayList<DSNAScribeCollectionContent> replicas = replicaManager.get(topic);
-
-			if (!(replicas == null) && !replicas.isEmpty())	{
-				DSNAScribeCollectionContent newestReplica = replicas.get(0);
-				for (DSNAScribeCollectionContent theReplica : replicas)	
-					if (theReplica.isNewerThan(newestReplica)) newestReplica = theReplica;
-				publishedCaches.put(topic, new ArrayList<ScribeContent>());	
-				cachePublishMessage(topic, newestReplica);
-				return true;
-			} else return false;
-  	}  
+		ArrayList<DSNAScribeCollectionContent> replicas = replicaManager.get(topic);
+		
+		// Signifying that pulling of the topic is ended.
+		replicaManager.remove(topic);
+		
+		if (!(replicas == null) && !replicas.isEmpty())	{
+			DSNAScribeCollectionContent newestReplica = replicas.get(0);
+			for (DSNAScribeCollectionContent theReplica : replicas)	
+				if (theReplica.isNewerThan(newestReplica)) newestReplica = theReplica;
+			publishedCaches.put(topic, new ArrayList<ScribeContent>());	
+			cachePublishMessage(topic, newestReplica);
+			return true;
+		} else return false;
+  	
   }
   
   void asynchronousReplicateCache(Topic topic)	{

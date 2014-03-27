@@ -98,7 +98,7 @@ public class DSNAScribeClient implements ScribeReliableMultiClient, Application 
    * Subscribes to the noncache topics, attach the localLatestSeq to retrieve missing event
    */
   public void subscribeToCacheTopics(Collection<String> topicIds, HashMap<String,Long> seqs) {
-  	Collection<Topic> theTopics = getTopicFromIds(topicIds, seqs);
+  	Collection<Topic> theTopics = getCachingTopicFromIds(topicIds, seqs);
     myScribe.subscribe(theTopics, this, null, null);
   }
   
@@ -146,7 +146,7 @@ public class DSNAScribeClient implements ScribeReliableMultiClient, Application 
   	return theTopics;
   }
   
-  private Collection<Topic> getTopicFromIds(Collection<String> topicIds, HashMap<String,Long> lastSeqs)	{
+  private Collection<Topic> getCachingTopicFromIds(Collection<String> topicIds, HashMap<String,Long> lastSeqs)	{
   	ArrayList<Topic> theTopics = new ArrayList<Topic>();
   	for (String topicId : topicIds)	{
   		Id idObject = idf.buildIdFromToString(topicId);
@@ -156,7 +156,7 @@ public class DSNAScribeClient implements ScribeReliableMultiClient, Application 
   			topic.setSeq(topicLastSeq);
   		else
   			topic.setSeq(Topic.SEQ_IGNORE);
-  		topic.setCaching(false);
+  		topic.setCaching(true);
   		theTopics.add(topic);
   	}
   	return theTopics;
