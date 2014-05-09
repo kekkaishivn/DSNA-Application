@@ -11,6 +11,7 @@ import com.dsna.util.DateTimeUtil;
 public class SocialProfile extends BaseEntity {
 	
 	static final long serialVersionUID = 176342932409324L;	
+	public static final int TYPE = 1;
 	
 	private String birthDay;
 	private String about;
@@ -19,7 +20,16 @@ public class SocialProfile extends BaseEntity {
 	private String ToFollowNotificationTopic;
 	private String ToFollowRealIpTopic;
 	private String profileImgUrl;
+	
+	/*
+	 * Mapping key (user id) to friends profile
+	 */
 	private HashMap<String, SocialProfile> friendProfiles;
+	
+	/*
+	 * Mapping conversation names to topics ids
+	 */
+	private HashMap<String, String> conversationMaps;
 
 	public SocialProfile(String ownerId, long timeStamp) {
 		super(ownerId, timeStamp);
@@ -28,6 +38,7 @@ public class SocialProfile extends BaseEntity {
 		setToFollowRealIpTopic(ownerId+"_TOFOLLOWREALIP");
 		ownerUsername = "USER1";
 		friendProfiles = new HashMap<String, SocialProfile>();
+		conversationMaps = new HashMap<String, String>();
 	}
 
 	public int getAge() {
@@ -91,11 +102,31 @@ public class SocialProfile extends BaseEntity {
 	}
 	
 	public boolean addFriend(SocialProfile newFriend)	{
-			if (!friendProfiles.containsKey(newFriend.ownerId))	{
+			if (!friendProfiles.containsKey(newFriend.ownerId) && !ownerId.equalsIgnoreCase(newFriend.ownerId))	{
 				friendProfiles.put(newFriend.ownerId, newFriend);
+				addConversation(newFriend.ownerUsername, newFriend.ToDeliverMessageTopic);
 				return true;
 			}
 			return false;
+	}
+	
+	public void addConversation(String conversationName, String topicId)	{
+		conversationMaps.put(conversationName, topicId);
+	}
+	
+	public String getConversationTopicId(String conversationName)	{
+		return conversationMaps.get(conversationName);
+	}
+	
+	public void removeFriend(SocialProfile friend)	{
+		friendProfiles.remove(friend.ownerId);
+	}
+	
+	public String getFriendsUsername(String friendId)	{
+		if (!friendProfiles.containsKey(friendId))
+			return friendProfiles.get(friendId).ownerUsername;
+		else 
+			return null;
 	}
 	
 	public Collection<String> getFriendsToFollowNotificationTopics()	{
@@ -203,8 +234,8 @@ public class SocialProfile extends BaseEntity {
 	}
 	
 	@Override
-	public String getTypeName() {
-		return "SocialProfile";
+	public int getType() {
+		return TYPE;
 	}
 	
 	public String toString()	{

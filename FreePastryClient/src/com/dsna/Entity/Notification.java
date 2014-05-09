@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 public class Notification extends BaseEntity {
 
+	public static final int TYPE = 4;
 	private NotificationType type;
 	private String description;
 	private HashMap<String,String> arguments;
@@ -17,7 +18,7 @@ public class Notification extends BaseEntity {
 		//this.toIds = toIds;
 	}
 
-	public NotificationType getType() {
+	public NotificationType getNotificationType() {
 	    return this.type;
 	}
 
@@ -59,7 +60,7 @@ public class Notification extends BaseEntity {
 	}
 	
 	@Override
-	public String getTypeName() {
-		return "Notification";
+	public int getType() {
+		return TYPE;
 	}
 }

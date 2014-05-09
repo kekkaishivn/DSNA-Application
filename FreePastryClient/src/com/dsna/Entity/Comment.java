@@ -4,6 +4,7 @@ import java.util.Set;
 
 public class Comment extends BaseEntity {
 
+	public static final int TYPE = 3;
 	private String content;
 	private String toObjectId;
 	
@@ -35,9 +36,7 @@ public class Comment extends BaseEntity {
 	}
 
 	@Override
-	public String getTypeName() {
-		return "Comment";
+	public int getType() {
+		return TYPE;
 	}
-
-
 }

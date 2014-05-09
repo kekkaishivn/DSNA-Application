@@ -34,6 +34,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.JTabbedPane;
 
+import rice.Continuation;
 import rice.environment.Environment;
 import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.past.PastContent;
@@ -58,6 +59,7 @@ import com.dsna.service.SocialServiceImpl;
 import com.dsna.service.SocialEventListener;
 import com.dsna.util.FileUtil;
 import com.dsna.util.NetworkUtil;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -108,8 +110,10 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				System.out.println("Closing window");
-				ClientFrame.this.saveUserProfile();
-				ClientFrame.this.serviceHandler.logout();
+				if (ClientFrame.this.serviceHandler!=null)	{
+					ClientFrame.this.saveUserProfile();
+					ClientFrame.this.serviceHandler.logout();
+				}
 			}
 		});
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -179,7 +183,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		    env.getParameters().setString("firewall_test_policy","always");
 		    env.getParameters().setBoolean("probe_for_external_address", false);
 		    env.getParameters().setBoolean("epost_nat_support", false);
-		    env.getParameters().setString("external_address", "83.180.236.252:12345");
+		    //env.getParameters().setString("external_address", "83.180.236.252:12345");
 		    //env.getParameters().remove("nat_handler_class");
 				SocialServiceFactory factory = new SocialServiceFactory(env);
 				try {
@@ -187,9 +191,9 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 					SocialProfile user = ClientFrame.this.loadUserProfile(username+".dat");
 					HashMap<String,Long> lastSeqs = ClientFrame.this.loadTopicsCache(username+"_lastseq.dat");
 					if (user==null)
-						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, username);
+						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, username, null);
 					else
-						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, user, lastSeqs);
+						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, user, lastSeqs, null);
 					System.out.println(serviceHandler);
 					updateAccountInfo();
 					serviceHandler.initSubscribe();
@@ -565,17 +569,57 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	}
 	
 	private void postStatus() {
-		this.serviceHandler.postStatus(textArea_Status.getText());
+		try {
+			this.serviceHandler.postStatus(textArea_Status.getText());
+		} catch (UserRecoverableAuthIOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		textArea_Status.setText("");
 	}
 	
 	private void fetchStatus()	{
-		serviceHandler.lookupById(textField_StatusId.getText());
+		fetchStatus(textField_StatusId.getText());
+	}
+	
+	private void fetchStatus(final String statusId)	{
+		serviceHandler.lookupById(statusId, new Continuation<PastContent, Exception>() {
+      public void receiveResult(PastContent result) {
+    		if (result instanceof DSNAPastContent)	{
+    			BaseEntity entity = ((DSNAPastContent)result).getContent();
+    			if (entity.getType()==Status.TYPE)	{
+    				receiveStatus((Status)entity);
+    			}
+    			
+    		}
+      }
+
+	    public void receiveException(Exception result) {
+	      JOptionPane.showMessageDialog(ClientFrame.this, "Look up failed - "+statusId);
+	    }
+	  });
 	}
 	
 	private void findFriend()	{
-		isFindingFriend = true;
-		serviceHandler.lookupByName(textField_Contact_Username.getText());
+		
+		serviceHandler.lookupByName(textField_Contact_Username.getText(), new Continuation<PastContent, Exception>() {
+      public void receiveResult(PastContent result) {
+    		if (result instanceof DSNAPastContent)	{
+    			BaseEntity entity = ((DSNAPastContent)result).getContent();
+    			if (entity.getType()==SocialProfile.TYPE)	{
+    				updateContactLookupTab((SocialProfile)entity);
+    			}
+    			
+    		}
+      }
+
+	    public void receiveException(Exception result) {
+	      JOptionPane.showMessageDialog(ClientFrame.this, "Look up failed - "+textField_StatusId.getText());
+	    }
+	  });
 	}
 	
 	private void addFriend()	{
@@ -701,11 +745,11 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 
 	@Override
 	public void receiveNotification(Notification notification) {
-		switch (notification.getType())	{
+		switch (notification.getNotificationType())	{
 			case NEWFEEDS:
 				//JOptionPane.showMessageDialog(this, notification.getArgument("objectId"));
 				String objectId = notification.getArgument("objectId");
-				serviceHandler.lookupById(objectId);
+				this.fetchStatus(objectId);
 				break;
 			default:
 		}

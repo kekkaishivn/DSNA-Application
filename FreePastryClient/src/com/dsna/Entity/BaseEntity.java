@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 abstract public class BaseEntity implements Serializable {
 
-	static final long serialVersionUID = 5098466384372731320L;	
+	static final long serialVersionUID = 5098466384372731320L;
 	
 	long timeStamp;
 	String ownerId;
@@ -17,7 +17,7 @@ abstract public class BaseEntity implements Serializable {
 	}	
 	
 	abstract public boolean isHigherPriority(BaseEntity other);
-	abstract public String getTypeName();
+	abstract public int getType();
 
 	public String getOwnerDisplayName() {
 	    return this.ownerDisplayName;

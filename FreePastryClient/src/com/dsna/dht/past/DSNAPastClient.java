@@ -86,13 +86,13 @@ public class DSNAPastClient {
 		  }
 	  }
 	  
-	  public void insert(final PastContent content, Continuation action)	{
+	  public void insert(final PastContent content, Continuation<Boolean[], Exception> action)	{
 		  if( content instanceof DSNAPastContent )	{
 			  storageHandler.insert(content, GCPast.INFINITY_EXPIRATION, action);
 		  }
 	  }
 	  
-	  public void lookup(final Id lookupKey, Continuation action)	{
+	  public void lookup(final Id lookupKey, Continuation<PastContent, Exception> action)	{
 			  storageHandler.lookup(lookupKey, action);
 	  }
 	  

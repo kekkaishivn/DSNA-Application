@@ -1,6 +1,11 @@
 package com.dsna.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
@@ -20,6 +25,7 @@ import com.dsna.dht.scribe.DSNAScribeCollectionContent;
 import com.dsna.dht.scribe.DSNAScribeContent;
 import com.dsna.dht.scribe.DSNAScribeFactory;
 import com.dsna.dht.scribe.ScribeEventListener;
+import com.dsna.storage.cloud.CloudStorageService;
 import com.dsna.util.DateTimeUtil;
 import com.dsna.util.FileUtil;
 
@@ -39,15 +45,17 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 
 	private PastryNode pastryNode;
 	private DSNAPastClient storageHandler;
+	private CloudStorageService cloudHandler;
 	private DSNAScribeClient broadcaster;
 	private SocialEventListener eventListener;
 	private PastryIdFactory idf;
 	private SocialProfile userProfile;
 	private HashMap<String,Long> topicsLastSeq = new HashMap<String,Long>();
 	
-	protected SocialServiceImpl(PastryNode pastryNode, SocialEventListener eventListener) throws IOException, InterruptedException, JoinFailedException	{
+	protected SocialServiceImpl(PastryNode pastryNode, SocialEventListener eventListener, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
 		this.pastryNode = pastryNode;
 		this.eventListener = eventListener;
+		this.cloudHandler = cloudHandler;
 
 		// Create storage service from pastry node
 		DSNAPastFactory pastFactory = new DSNAPastFactory(pastryNode.getEnvironment());
@@ -60,46 +68,57 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		idf = new rice.pastry.commonapi.PastryIdFactory(pastryNode.getEnvironment());
 	}	
 	
-	public SocialServiceImpl(SocialProfile user, PastryNode pastryNode, SocialEventListener uiUpdater) throws IOException, InterruptedException, JoinFailedException	{
-		this(pastryNode, uiUpdater);
+	public SocialServiceImpl(SocialProfile user, PastryNode pastryNode, SocialEventListener uiUpdater, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
+		this(pastryNode, uiUpdater, cloudHandler);
 		setSocialProfile(user);
 	}
 	
-	public SocialServiceImpl(SocialProfile user, HashMap<String,Long> lastSeqs, PastryNode pastryNode, SocialEventListener uiUpdater) throws IOException, InterruptedException, JoinFailedException	{
-		this(pastryNode, uiUpdater);
+	public SocialServiceImpl(SocialProfile user, HashMap<String,Long> lastSeqs, PastryNode pastryNode, SocialEventListener uiUpdater, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
+		this(pastryNode, uiUpdater, cloudHandler);
 		setSocialProfile(user);
 		setTopicsLastSeq(lastSeqs);
 	}
 	
-	public SocialServiceImpl(String username, PastryNode pastryNode, SocialEventListener uiUpdater) throws IOException, InterruptedException, JoinFailedException	{
-		this(pastryNode, uiUpdater);
+	public SocialServiceImpl(String username, PastryNode pastryNode, SocialEventListener uiUpdater, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
+		this(pastryNode, uiUpdater, cloudHandler);
 		SocialProfile profile = null;
 		profile = SocialProfile.getSocialProfile(username, idf);
 		setSocialProfile(profile);
 	}
 	
 	@Override
-	public void postStatus(String status) {
+	public void postStatus(String status) throws IOException {
 		Id statusId = idf.buildId(status + userProfile.getOwnerUsername());
 		postStatus(statusId, status);
 	}
 	
 	@Override
-	public void postStatus(String id, String status) {
+	public void postStatus(String id, String status) throws IOException {
 		Id statusId = idf.buildIdFromToString(id);
 		postStatus(statusId, status);
 	}
 	
-	protected void postStatus(final Id statusId, final String status) {
+	protected void postStatus(final Id statusId, final String status) throws IOException {
 		String myUserName = userProfile.getOwnerUsername();
 		Status theStatus = userProfile.createStatus(status);
+		
+		if (cloudHandler!=null)	{
+			InputStream content = createInputStreamFromObject(theStatus);
+			String id = cloudHandler.uploadContentToFriendOnlyFolder(statusId.toStringFull()+".txt", "text/plain", "DSNA status", content);
+  		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
+  		notification.setDescription(statusId.toStringFull());
+  		notification.setArgument("cloudId", id);
+  		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);			
+			return;
+		}		
+		
 		storageHandler.insert(new DSNAPastContent(statusId, theStatus, GCPast.INFINITY_EXPIRATION), new Continuation<Boolean[], Exception>() {
       // the result is an Array of Booleans for each insert
       public void receiveResult(Boolean[] results) {          
     		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
     		notification.setDescription(statusId.toStringFull());
     		System.out.println(statusId.toStringFull());
-    		notification.setArgument("objectId", statusId.toStringFull());
+    		notification.setArgument("dhtId", statusId.toStringFull());
     		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);
       }
 
@@ -109,17 +128,41 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
     });
 		
 	}
+	
+	private InputStream createInputStreamFromObject(Serializable obj) throws IOException	{
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(baos);
+    oos.writeObject(obj);
+    oos.flush();
+    oos.close();
+    InputStream is = new ByteArrayInputStream(baos.toByteArray());	
+    return is;
+	}
 
 	@Override
-	public boolean sendMessage(String friendId, String msg) {
+	public Message sendMessage(String friendId, String msg) {
 		// TODO Auto-generated method stub
 		String topicId = userProfile.getFriendsToDeliverMessageTopic(friendId);
 		Message message = userProfile.createMessage(msg);
+		message.setConversation(userProfile.getOwnerUsername());
 		if (topicId!=null)	{
 			broadcaster.publish(topicId, message, true);
-			return true;
+			return message;
 		}
-		return false;
+		return null;
+	}
+	
+	@Override
+	public Message sendMessageToConversation(String conversationName, String msg) {
+		// TODO Auto-generated method stub
+		String topicId = userProfile.getConversationTopicId(conversationName);
+		Message message = userProfile.createMessage(msg);
+		message.setConversation(userProfile.getOwnerUsername());
+		if (topicId!=null)	{
+			broadcaster.publish(topicId, message, true);
+			return message;
+		}
+		return null;
 	}
 
 	@Override
@@ -141,18 +184,13 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 
 	@Override
-	public void lookupById(final String id) {
-		new Thread( new Runnable() {
-        public void run() {
-      		storageHandler.lookup(idf.buildIdFromToString(id));
-            //Handler.postDelayed(Delayed, DisabledAfter);              
-        }
-    }).start();
+	public void lookupById(final String id, Continuation<PastContent, Exception> resultHandler) {
+    storageHandler.lookup(idf.buildIdFromToString(id), resultHandler);
 	}
 	
 	@Override
-	public void lookupByName(String name) {
-		storageHandler.lookup(idf.buildId(name));
+	public void lookupByName(String name, Continuation<PastContent, Exception> resultHandler) {
+		storageHandler.lookup(idf.buildId(name), resultHandler);
 	}
 	
 	public SocialProfile defaultSocialProfile()	{
@@ -225,11 +263,11 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		
 		if (result instanceof DSNAPastContent)	{
 			BaseEntity entity = ((DSNAPastContent)result).getContent();
-			switch(entity.getTypeName())	{
-			case "SocialProfile":
+			switch(entity.getType())	{
+			case SocialProfile.TYPE:
 				eventListener.receiveSocialProfile((SocialProfile)entity);
 				break;
-			case "Status":
+			case Status.TYPE:
 				eventListener.receiveStatus((Status)entity);
 				break;
 			}
@@ -292,11 +330,11 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 			// Pass entity to event listener
 			BaseEntity msg = sc.getMessage();
 			if (eventListener != null) 
-				switch (msg.getTypeName())	{
-					case "Message":
+				switch (msg.getType())	{
+					case Message.TYPE:
 						eventListener.receiveMessage((Message)msg);
 						break;
-					case "Notification":
+					case Notification.TYPE:
 						eventListener.receiveNotification((Notification)msg);
 						break;
 					default:
@@ -346,5 +384,13 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		if (topicsLastSeq!=null)
 			this.topicsLastSeq = new HashMap<String, Long>(topicsLastSeq);
 	}
+
+	@Override
+	public void setCloudHandler(CloudStorageService cloudHandler) {
+		// TODO Auto-generated method stub
+		this.cloudHandler = cloudHandler;
+	}
+
+
 
 }

@@ -1,8 +1,15 @@
 package com.dsna.service;
 
+import java.io.IOException;
 import java.util.HashMap;
 
+import rice.Continuation;
+import rice.p2p.past.PastContent;
+
+import com.dsna.Entity.Message;
 import com.dsna.Entity.SocialProfile;
+import com.dsna.storage.cloud.CloudStorageService;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 
 public interface SocialService {
 	
@@ -11,12 +18,13 @@ public interface SocialService {
 	//sendMessage();
 	//viewWall();
 	
-	public void postStatus(String status);
-	public void postStatus(String id, String status);
-	public void lookupById(String id);
-	public void lookupByName(String name);
+	public void postStatus(String status) throws UserRecoverableAuthIOException, IOException;
+	public void postStatus(String id, String status) throws UserRecoverableAuthIOException, IOException;
+	public void lookupById(String id, Continuation<PastContent, Exception> action);
+	public void lookupByName(String name, Continuation<PastContent, Exception> action);
 	public boolean addFriend(SocialProfile friend);
-	public boolean sendMessage(String friendId, String msg);
+	public Message sendMessage(String friendId, String msg);
+	public Message sendMessageToConversation(String conversationName, String msg);
 	public void subscribe(String topic);
 	public void unsubscribe(String topic);
 	public void initSubscribe();
@@ -25,6 +33,7 @@ public interface SocialService {
 	public void updateProfile(SocialProfile edittedProfile);
 	public SocialProfile getUserProfile();
 	public void pushProfileToDHT();
+	public void setCloudHandler(CloudStorageService cloudHandler);
 	public void logout();
 	//public boolean viewOfflineMessage();
 	//public boolean sendFile();

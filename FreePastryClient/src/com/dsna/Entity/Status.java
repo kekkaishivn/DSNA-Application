@@ -2,6 +2,7 @@ package com.dsna.Entity;
 
 public class Status extends BaseEntity {
 	
+	public static final int TYPE = 5;
 	private String content;
 	
 	Status(String ownerId, long timeStamp, String content)	{
@@ -27,7 +28,7 @@ public class Status extends BaseEntity {
 	}
 
 	@Override
-	public String getTypeName() {
-		return "Status";
+	public int getType() {
+		return TYPE;
 	}
 }

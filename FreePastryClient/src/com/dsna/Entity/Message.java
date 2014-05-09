@@ -2,26 +2,31 @@ package com.dsna.Entity;
 
 public class Message extends BaseEntity {
 
-	static final long serialVersionUID = 987234019735861344L;		
+	static final long serialVersionUID = 987234019735861344L;	
+	public static final int TYPE = 2;
 	private String content;
-	private String ownerName;
+	private String in_conversation;
 	
 	Message(String ownerId, String ownerName, long timeStamp, String content)	{
 		super(ownerId, timeStamp);
 		this.content = content;
-		this.ownerName = ownerName;
+		this.ownerUsername = ownerName;
 	}
 	
 	public String getContent()	{
 		return content;
 	}
 	
-	public String getOwnerName()	{
-		return ownerName;
+	public String getConversation()	{
+		return in_conversation;
+	}
+	
+	public void setConversation(String in_conversation)	{
+		this.in_conversation = in_conversation;
 	}
 	
 	public String toString()	{
-		return "Message from ["+ownerName+"] :"+content;
+		return "Message from ["+ownerUsername+"] :"+content;
 	}
 
 	@Override
@@ -34,7 +39,7 @@ public class Message extends BaseEntity {
 	}
 	
 	@Override
-	public String getTypeName() {
-		return "Message";
+	public int getType() {
+		return TYPE;
 	}
 }
