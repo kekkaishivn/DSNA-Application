@@ -1,5 +1,6 @@
 package com.dsna.util;
 
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,6 +16,14 @@ public class FileUtil {
     oos.writeObject(object);
     oos.flush();
     oos.close();
+	}
+	
+	public static void writeText(FileOutputStream fout, String s) throws IOException	{
+		BufferedOutputStream bos = null;
+    bos = new BufferedOutputStream(fout);
+    bos.write(s.getBytes());
+    bos.flush();
+    bos.close();
 	}
 	
 	public static Object readObject(FileInputStream streamIn) throws IOException, ClassNotFoundException	{
