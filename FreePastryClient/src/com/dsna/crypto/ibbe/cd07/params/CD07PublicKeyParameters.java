@@ -7,10 +7,10 @@ import it.unisa.dia.gas.plaf.jpbc.util.ElementUtils;
  * @author Tien Dat Le (letiendat3012@gmail.com)
  */
 public class CD07PublicKeyParameters extends CD07KeyParameters {
+	
     private Element omega, v, h;
     private Element theta;
     private Element[] Ms;
-
 
     public CD07PublicKeyParameters(CD07Parameters parameters,
                                    Element omega, Element v, Element h, Element theta,

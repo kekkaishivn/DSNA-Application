@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Vector;
 
-import com.dsna.Entity.BaseEntity;
+import com.dsna.entity.BaseEntity;
 import com.dsna.service.SocialEventListener;
 
 import rice.p2p.commonapi.*;

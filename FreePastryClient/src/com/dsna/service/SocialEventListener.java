@@ -2,10 +2,10 @@ package com.dsna.service;
 
 import java.util.Collection;
 
-import com.dsna.Entity.Message;
-import com.dsna.Entity.Notification;
-import com.dsna.Entity.SocialProfile;
-import com.dsna.Entity.Status;
+import com.dsna.entity.Message;
+import com.dsna.entity.Notification;
+import com.dsna.entity.SocialProfile;
+import com.dsna.entity.Status;
 
 import rice.p2p.past.PastContent;
 import rice.p2p.scribe.ScribeMultiClient;

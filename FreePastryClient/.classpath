@@ -17,7 +17,7 @@
 	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-http-client-gson-1.18.0-rc.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-oauth-client-1.18.0-rc.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/gson-2.1.jar"/>
-	<classpathentry kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/bcprov-jdk16-1.46.jar"/>
-	<classpathentry kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/jpbc-crypto-2.0.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/bcprov-jdk16-1.46.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/jpbc-crypto-2.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

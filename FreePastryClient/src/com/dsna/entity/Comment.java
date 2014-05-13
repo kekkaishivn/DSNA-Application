@@ -1,21 +1,29 @@
-package com.dsna.Entity;
+package com.dsna.entity;
 
-public class Status extends BaseEntity {
-	
-	public static final int TYPE = 5;
+import java.util.Set;
+
+public class Comment extends BaseEntity {
+
+	public static final int TYPE = 3;
 	private String content;
+	private String toObjectId;
 	
-	Status(String ownerId, long timeStamp, String content)	{
+	Comment(String ownerId, long timeStamp, String content, String toObjectId)	{
 		super(ownerId, timeStamp);
 		this.content = content;
+		this.toObjectId = toObjectId;
 	}
 	
 	public String getContent()	{
 		return content;
 	}
 	
+	public String getToObjectId()	{
+		return toObjectId;
+	}
+	
 	public String toString()	{
-		return "Status of ["+ownerId+"] :"+content;
+		return "Comment on <"+toObjectId+"> :"+content;
 	}
 
 	@Override

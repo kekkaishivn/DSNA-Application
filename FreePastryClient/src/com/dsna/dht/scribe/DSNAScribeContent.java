@@ -1,7 +1,7 @@
 package com.dsna.dht.scribe;
 
 
-import com.dsna.Entity.BaseEntity;
+import com.dsna.entity.BaseEntity;
 
 import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.scribe.ScribeContent;

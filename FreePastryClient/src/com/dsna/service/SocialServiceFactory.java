@@ -5,11 +5,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
-import com.dsna.Entity.SocialProfile;
 import com.dsna.dht.past.DSNAPastClient;
 import com.dsna.dht.past.DSNAPastFactory;
 import com.dsna.dht.scribe.DSNAScribeClient;
 import com.dsna.dht.scribe.DSNAScribeFactory;
+import com.dsna.entity.SocialProfile;
 import com.dsna.storage.cloud.CloudStorageService;
 
 import rice.environment.Environment;

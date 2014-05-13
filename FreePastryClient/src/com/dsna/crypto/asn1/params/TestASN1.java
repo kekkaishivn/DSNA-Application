@@ -1,4 +1,4 @@
-package com.dsna.asn1.ibe;
+package com.dsna.crypto.asn1.params;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
@@ -14,6 +15,12 @@ import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
+import com.dsna.crypto.asn1.exception.UnsupportedFormatException;
+import com.dsna.crypto.ibbe.cd07.IBBECD07;
+import com.dsna.crypto.ibbe.cd07.params.CD07DecryptionParameters;
+import com.dsna.crypto.ibbe.cd07.params.CD07PublicKeyParameters;
+import com.dsna.crypto.ibbe.cd07.params.CD07SecretKeyParameters;
+import com.dsna.util.ASN1Util;
 import com.dsna.util.FileUtil;
 
 import rice.p2p.util.Base64;
@@ -31,100 +38,72 @@ import it.unisa.dia.gas.plaf.jpbc.pairing.parameters.PropertiesParameters;
 
 public class TestASN1 {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 	// Setup -> (Public Key, Master Secret Key)
     AsymmetricCipherKeyPair keyPair = setup(createParameters(256, 256));
     PS06PublicKeyParameters ps06PublicKey = (PS06PublicKeyParameters)keyPair.getPublic();
-    IBEPublicParameters asn1Ps06PublicKey = encodePs06PublicParameters(ps06PublicKey);
-    //System.out.println(Base64.encodeBytes(asn1Ps06PublicKey.getDEREncoded()));
+    String encodedAsn1Ps06PublicKey = ASN1Util.encode(ps06PublicKey);
  // Extract -> Secret Key for Identity "01001101"
     String id1 = new BigInteger(doHash("letiendat3012@gmail.com")).toString(2);
     String id2 = new BigInteger(doHash("letiendat30@gmail.com")).toString(2);
     
     CipherParameters secretKey = extract(keyPair, id1);
+    String encodedSecretKey = ASN1Util.encode(secretKey);
+
+    CipherParameters decodedSecretKey = ASN1Util.decodePs06SecretParameters(encodedSecretKey, ps06PublicKey);
 
     // Sign
     String message = "Hi there, hello there, hehehee";
-    byte[] signature = sign(message, secretKey);    
+    byte[] signature = sign(message, decodedSecretKey);    
     try	{
-    	PS06PublicKeyParameters decodedPublicKey = decodePs06PublicParameters(Base64.encodeBytes(asn1Ps06PublicKey.getDEREncoded()));
+    	PS06PublicKeyParameters decodedPublicKey = ASN1Util.decodePs06PublicParameters(encodedAsn1Ps06PublicKey);
    // verify with the original public key
       System.out.println(verify(keyPair.getPublic(), message, id1, signature));
    // verify with the decoded identity
       System.out.println(verify(decodedPublicKey, message, id2, signature));
+      
+      IBBECD07 engine = new IBBECD07();
+      // Setup
+      AsymmetricCipherKeyPair keyPair1 = engine.setup(300);
+      
+      String[] idsName = {"letiendat3012@gmail.com", "halo@yahoo.com", "tdle@vnu.edu.vn"};
+      String encodedPublicKey1 = ASN1Util.encode(keyPair1.getPublic());
+      
+      Element[] ids1 = engine.map(keyPair1.getPublic(), idsName);
+      CipherParameters secretKey1 = engine.extract(keyPair1, "letiendat3012@gmail.com");
+      String encodedSecretKey1 = ASN1Util.encode(secretKey1);
+      CipherParameters decodedSecretKey1 = ASN1Util.decodeCD07SecretParameters(encodedSecretKey1, (CD07PublicKeyParameters)keyPair1.getPublic());
+      CipherParameters decryptionKey1 = new CD07DecryptionParameters((CD07SecretKeyParameters)decodedSecretKey1, ids1);
+
+      // Encryption/Decryption
+      byte[][] ciphertext = engine.encaps(ASN1Util.decodeCD07PublicParameters(encodedPublicKey1), ids1);
+      byte[] key = engine.decaps(decryptionKey1, ciphertext[1]); 
+      
+      IBEPublicParameters ps06Public = (IBEPublicParameters)ASN1Util.toASN1Object(ps06PublicKey);
+      IBEPublicParameters cd07Public = (IBEPublicParameters)ASN1Util.toASN1Object(keyPair1.getPublic());
+      IBESecretParameters ps06Secret = (IBESecretParameters)ASN1Util.toASN1Object(secretKey);
+      IBESecretParameters cd07Secret = (IBESecretParameters)ASN1Util.toASN1Object(secretKey1);
+      
+      
+      Date notBefore = new Date(System.currentTimeMillis());
+      Date notAfter = new Date(System.currentTimeMillis()+10000000);
+      IBESysPublicParams certificate = new IBESysPublicParams(1, "KTH-Mobile Service", 10001, notBefore, notAfter, ps06Public, cd07Public);
+      String encodedCertificate = ASN1Util.encode(certificate);
+      IBESysPublicParams decodedCertificate = ASN1Util.decodeIBESysPublicParams(encodedCertificate);
+      IBESysSecretParams userCertificate = new IBESysSecretParams(1, "KTH-Mobile Service", 10001, notBefore, notAfter, ps06Secret, cd07Secret);
+      IBESysSecretParams decodedUserCertificate = ASN1Util.decodeIBESysSecretParams(ASN1Util.encode(userCertificate));
+      CipherParameters[] sysPublicKeys = ASN1Util.extractPublicKey(decodedCertificate);
+      CipherParameters[] sysPrivateKeys = ASN1Util.extractSecretKey(decodedUserCertificate, sysPublicKeys);
+      CipherParameters decryptionKey2 = new CD07DecryptionParameters((CD07SecretKeyParameters)sysPrivateKeys[1], ids1);
+      
+      ciphertext = engine.encaps(sysPublicKeys[1], ids1);
+      key = engine.decaps(decryptionKey2, ciphertext[1]);       
+      
     } catch (Exception e)	{
     	e.printStackTrace();
     }
-    //ps06KeyPair.
-	}
-	
-	public static PS06PublicKeyParameters decodePs06PublicParameters(String encodedString) throws Exception	{
-		DERSequence seq = (DERSequence)DERSequence.fromByteArray(Base64.decode(encodedString));
-		//System.out.println(seq.toString());
-		IBEPublicParameters ps06PublicParams = new IBEPublicParameters(seq);
-		String curveParamDescription = new String(ps06PublicParams.getElementAt(0).getRawData());
-		PropertiesParameters curveParams = new PropertiesParameters();
-		curveParams.load(new ByteArrayInputStream(curveParamDescription.getBytes()));
-		Pairing pairing = PairingFactory.getPairing(curveParams);
-		
-		Element g = pairing.getG1().newElementFromBytes(ps06PublicParams.getElementAt(1).getRawData());
-		int nU = new BigInteger(ps06PublicParams.getElementAt(2).getRawData()).intValue();
-		int nM = new BigInteger(ps06PublicParams.getElementAt(3).getRawData()).intValue();
-		
-		PS06Parameters ps06Parameters = new PS06Parameters(curveParams, g, nU, nM);
-		
-		Element g1 = pairing.getG1().newElementFromBytes(ps06PublicParams.getElementAt(4).getRawData());
-		Element g2 = pairing.getG1().newElementFromBytes(ps06PublicParams.getElementAt(5).getRawData());
-		Element uPrime = pairing.getG1().newElementFromBytes(ps06PublicParams.getElementAt(6).getRawData());
-		Element mPrime = pairing.getG1().newElementFromBytes(ps06PublicParams.getElementAt(7).getRawData());
-		
-		Element[] Us = new Element[nU];
-		for (int i = 0; i < Us.length; i++) {
-      Us[i] = pairing.getG1().newElementFromBytes(ps06PublicParams.getElementAt(i+8).getRawData());
-		}
-		
-		Element[] Ms = new Element[nM];
-		for (int j = 0; j < Ms.length; j++)	{
-			Ms[j] = pairing.getG2().newElementFromBytes(ps06PublicParams.getElementAt(j+nU+8).getRawData());
-		}
-		return new PS06PublicKeyParameters(ps06Parameters, g1, g2, uPrime, mPrime, Us, Ms);
-	}
-	
-	public static IBEPublicParameters encodePs06PublicParameters(PS06PublicKeyParameters ps06PublicKey)	{
-		ArrayList<IBEPublicParameter> ps06PublicParameters = new ArrayList<IBEPublicParameter>();
-		PS06Parameters params = ps06PublicKey.getParameters();
-		Element g = params.getG();
-		System.out.println(Base64.encodeBytes(g.toBytes()));
-		int nU = params.getnU();
-		int nM = params.getnM();
-		String algorithmOid = "2.16.840.1.114334.1.2.1.5.1";
-		ps06PublicParameters.add(encodeString(algorithmOid, params.getCurveParams().toString()));
-		ps06PublicParameters.add(encodeElement(algorithmOid, g));
-		ps06PublicParameters.add(encodeInt(algorithmOid, nU));
-		ps06PublicParameters.add(encodeInt(algorithmOid, nM));
-		ps06PublicParameters.add(encodeElement(algorithmOid, ps06PublicKey.getG1()));
-		ps06PublicParameters.add(encodeElement(algorithmOid, ps06PublicKey.getG2()));
-		ps06PublicParameters.add(encodeElement(algorithmOid, ps06PublicKey.getuPrime()));
-		ps06PublicParameters.add(encodeElement(algorithmOid, ps06PublicKey.getmPrime()));
-
-		for (int i=0; i<nU; i++)
-			ps06PublicParameters.add(encodeElement(algorithmOid, ps06PublicKey.getUAt(i)));
-		for (int i=0; i<nM; i++)
-			ps06PublicParameters.add(encodeElement(algorithmOid, ps06PublicKey.getMAt(i)));
-		return new IBEPublicParameters(ps06PublicParameters);
-	}
-	
-	public static IBEPublicParameter encodeElement(String oid, Element e)	{
-		return new IBEPublicParameter(oid, e.toBytes());
-	}
-	
-	public static IBEPublicParameter encodeString(String oid, String s)	{
-		return new IBEPublicParameter(oid, s.getBytes());
-	}
-	
-	public static IBEPublicParameter encodeInt(String oid, int n)	{
-		return new IBEPublicParameter(oid, ByteBuffer.allocate(4).putInt(n).array());
+    
 	}
 	
   public static PS06Parameters createParameters(int nU, int nM) {

@@ -12,7 +12,6 @@ public class CD07SecretKeyParameters extends CD07KeyParameters {
 
     public CD07SecretKeyParameters(CD07PublicKeyParameters publicKey, Element identity, Element skid) {
         super(true, publicKey.getParameters());
-
         this.publicKey = publicKey;
         this.identity = identity;
         this.skid = skid.getImmutable();

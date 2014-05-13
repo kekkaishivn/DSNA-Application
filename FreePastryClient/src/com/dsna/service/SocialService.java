@@ -6,8 +6,8 @@ import java.util.HashMap;
 import rice.Continuation;
 import rice.p2p.past.PastContent;
 
-import com.dsna.Entity.Message;
-import com.dsna.Entity.SocialProfile;
+import com.dsna.entity.Message;
+import com.dsna.entity.SocialProfile;
 import com.dsna.storage.cloud.CloudStorageService;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 

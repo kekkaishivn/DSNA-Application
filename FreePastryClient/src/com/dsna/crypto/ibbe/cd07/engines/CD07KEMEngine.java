@@ -5,13 +5,10 @@ import java.io.IOException;
 
 import it.unisa.dia.gas.crypto.jpbc.kem.PairingKeyEncapsulationMechanism;
 import it.unisa.dia.gas.jpbc.Element;
-import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import it.unisa.dia.gas.plaf.jpbc.util.io.PairingStreamReader;
 
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.bouncycastle.crypto.Wrapper;
 
 import com.dsna.crypto.ibbe.cd07.params.CD07DecryptionParameters;
 import com.dsna.crypto.ibbe.cd07.params.CD07EncryptionParameters;
@@ -28,8 +25,8 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
       if (!(key instanceof CD07EncryptionParameters))
           throw new IllegalArgumentException("CD07EncryptionParameters are required for encryption.");
 	  } else {
-	      if (!(key instanceof CD07DecryptionParameters))
-	          throw new IllegalArgumentException("CD07DecryptionParameters are required for decryption.");
+      if (!(key instanceof CD07DecryptionParameters))
+          throw new IllegalArgumentException("CD07DecryptionParameters are required for decryption.");
 	  }
 	
 	  this.pairing = PairingFactory.getPairing(((CD07KeyParameters) key).getParameters().getCurveParams());

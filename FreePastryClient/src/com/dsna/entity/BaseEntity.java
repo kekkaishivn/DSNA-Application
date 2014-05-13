@@ -1,4 +1,4 @@
-package com.dsna.Entity;
+package com.dsna.entity;
 
 import java.io.Serializable;
 

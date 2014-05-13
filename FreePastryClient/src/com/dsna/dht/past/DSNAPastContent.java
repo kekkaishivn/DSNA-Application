@@ -1,7 +1,7 @@
 package com.dsna.dht.past;
 
-import com.dsna.Entity.BaseEntity;
-import com.dsna.Entity.SocialProfile;
+import com.dsna.entity.BaseEntity;
+import com.dsna.entity.SocialProfile;
 
 import rice.p2p.commonapi.Id;
 import rice.p2p.past.ContentHashPastContent;
