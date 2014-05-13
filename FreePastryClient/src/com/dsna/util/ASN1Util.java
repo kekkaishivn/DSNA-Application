@@ -27,7 +27,7 @@ import com.dsna.crypto.asn1.params.IBEParameters;
 import com.dsna.crypto.asn1.params.IBESecretParameters;
 import com.dsna.crypto.asn1.params.IBEPublicParameters;
 import com.dsna.crypto.asn1.params.IBESysPublicParams;
-import com.dsna.crypto.asn1.params.IBESysSecretParams;
+import com.dsna.crypto.asn1.params.IBEClientSecretParams;
 import com.dsna.crypto.ibbe.cd07.params.CD07KeyParameters;
 import com.dsna.crypto.ibbe.cd07.params.CD07Parameters;
 import com.dsna.crypto.ibbe.cd07.params.CD07PublicKeyParameters;
@@ -68,9 +68,9 @@ public class ASN1Util {
 		return sysPublicParams;
 	}
 	
-	public static IBESysSecretParams decodeIBESysSecretParams(String encodedString) throws IOException, InvalidCertificateException	{
+	public static IBEClientSecretParams decodeIBESysSecretParams(String encodedString) throws IOException, InvalidCertificateException	{
 		DERSequence seq = (DERSequence)DERSequence.fromByteArray(Base64.decode(encodedString));
-		IBESysSecretParams sysSecretParams = new IBESysSecretParams(seq);
+		IBEClientSecretParams sysSecretParams = new IBEClientSecretParams(seq);
 		return sysSecretParams;
 	}
 	
@@ -183,7 +183,7 @@ public class ASN1Util {
 		return publicKeys;
 	}
 	
-	public static CipherParameters[] extractSecretKey(IBESysSecretParams certificate, CipherParameters[] publicKeys)
+	public static CipherParameters[] extractSecretKey(IBEClientSecretParams certificate, CipherParameters[] publicKeys)
 			throws InvalidCertificateException, UnsupportedFormatException {
 			if (!certificate.isValidPeriod(new Date(System.currentTimeMillis())))	
 				throw new InvalidCertificateException("Certificate is expired");

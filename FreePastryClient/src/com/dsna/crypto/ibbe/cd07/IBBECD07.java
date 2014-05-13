@@ -93,22 +93,7 @@ public class IBBECD07 {
 
 
 	public static void main(String[] args) throws Exception {
-		IBBECD07 engine = new IBBECD07();
-    // Setup
-    AsymmetricCipherKeyPair keyPair = engine.setup(50);
-    
-    String[] idsName = {"letiendat3012@gmail.com", "halo@yahoo.com", "tdle@vnu.edu.vn"};
-    String encodedPublicKey = ASN1Util.encode(keyPair.getPublic());
-    
-    Element[] ids = engine.map(keyPair.getPublic(), idsName);
-    CipherParameters secretKey = engine.extract(keyPair, "letiendat3012@gmail.com");
-    String encodedSecretKey = ASN1Util.encode(secretKey);
-    CipherParameters decodedSecretKey = ASN1Util.decodeCD07SecretParameters(encodedSecretKey, (CD07PublicKeyParameters)keyPair.getPublic());
-    CipherParameters decryptionKey = new CD07DecryptionParameters((CD07SecretKeyParameters)decodedSecretKey, ids);
-
-    // Encryption/Decryption
-    byte[][] ciphertext = engine.encaps(ASN1Util.decodeCD07PublicParameters(encodedPublicKey), ids);
-    byte[] key = engine.decaps(decryptionKey, ciphertext[1]);
+		
 	}	
 
 }

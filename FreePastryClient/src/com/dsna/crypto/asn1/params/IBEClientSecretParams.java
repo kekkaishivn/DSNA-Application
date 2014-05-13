@@ -9,12 +9,12 @@ import org.bouncycastle.asn1.DERSequence;
 
 import com.dsna.crypto.asn1.exception.InvalidCertificateException;
 
-public class IBESysSecretParams extends IBESysParams {
+public class IBEClientSecretParams extends IBESysParams {
 	
 	private IBESecretParameters ps06SecretParameters;
 	private IBESecretParameters cd07IBBESecretParameters;
 	
-	public IBESysSecretParams(ASN1Sequence seq) throws InvalidCertificateException {
+	public IBEClientSecretParams(ASN1Sequence seq) throws InvalidCertificateException {
 		super(seq);
 		if (seq.getObjectAt(4) instanceof ASN1Sequence)	
 			this.ps06SecretParameters = new IBESecretParameters((ASN1Sequence)seq.getObjectAt(4));
@@ -23,7 +23,7 @@ public class IBESysSecretParams extends IBESysParams {
 			this.cd07IBBESecretParameters = new IBESecretParameters((ASN1Sequence)seq.getObjectAt(5));
 	}
 	
-	public IBESysSecretParams(int version, String districtName, int districtSerial, Date notBefore, Date notAfter, 
+	public IBEClientSecretParams(int version, String districtName, int districtSerial, Date notBefore, Date notAfter, 
 			IBESecretParameters ps06SecretParameters, IBESecretParameters cd07IBBESecretParameters) 
 			throws Exception	{
 		super(version, districtName, districtSerial, notBefore, notAfter);
