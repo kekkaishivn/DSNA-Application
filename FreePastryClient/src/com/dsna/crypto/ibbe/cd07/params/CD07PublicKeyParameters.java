@@ -9,18 +9,20 @@ import it.unisa.dia.gas.plaf.jpbc.util.ElementUtils;
 public class CD07PublicKeyParameters extends CD07KeyParameters {
 	
     private Element omega, v, h;
-    private Element theta;
+    
+    /*
+     * This arrays contain h^theta^1, h^theta^2, ... , h^theta^m-1
+     */
     private Element[] Ms;
 
     public CD07PublicKeyParameters(CD07Parameters parameters,
-                                   Element omega, Element v, Element h, Element theta,
+                                   Element omega, Element v, Element h,
                                    Element[] Ms) {
         super(false, parameters);
 
         this.omega = omega.getImmutable();
         this.v = v.getImmutable();
         this.h = h.getImmutable();
-        this.theta = theta.getImmutable();
         this.Ms = ElementUtils.cloneImmutable(Ms);
     }
     
@@ -34,10 +36,6 @@ public class CD07PublicKeyParameters extends CD07KeyParameters {
 
     public Element getH() {
         return h;
-    }
-    
-    public Element getTheta()	{
-    		return theta;
     }
 
     public Element getMAt(int index) {

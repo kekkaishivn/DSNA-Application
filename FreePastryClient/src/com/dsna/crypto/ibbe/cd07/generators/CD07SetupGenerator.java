@@ -49,7 +49,7 @@ public class CD07SetupGenerator implements AsymmetricCipherKeyPairGenerator {
         }
 
         return new AsymmetricCipherKeyPair(
-            new CD07PublicKeyParameters(parameters, omega, v, h, theta, Ms),
+            new CD07PublicKeyParameters(parameters, omega, v, h, Ms),
             new CD07MasterSecretKeyParameters(parameters, g, theta)
         );
     }

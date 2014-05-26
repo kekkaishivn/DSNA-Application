@@ -43,7 +43,7 @@ public class IBESysPublicParams extends IBESysParams {
 		return new DERSequence(v);
 	}
 	
-	public IBEPublicParameters getPs06Parameter()	{
+	public IBEPublicParameters getPS06Parameter()	{
 		return ps06PublicParameters;
 	}
 	

@@ -43,7 +43,7 @@ public class IBEClientSecretParams extends IBESysParams {
 		return new DERSequence(v);
 	}
 	
-	public IBESecretParameters getPs06Parameter()	{
+	public IBESecretParameters getPS06Parameter()	{
 		return ps06SecretParameters;
 	}
 	

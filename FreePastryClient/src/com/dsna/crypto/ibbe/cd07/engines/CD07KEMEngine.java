@@ -2,9 +2,12 @@ package com.dsna.crypto.ibbe.cd07.engines;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
 
 import it.unisa.dia.gas.crypto.jpbc.kem.PairingKeyEncapsulationMechanism;
 import it.unisa.dia.gas.jpbc.Element;
+import it.unisa.dia.gas.jpbc.Field;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import it.unisa.dia.gas.plaf.jpbc.util.io.PairingStreamReader;
 
@@ -34,6 +37,42 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
 	  this.inBytes = 2 * pairing.getG1().getLengthInBytes();
 	  this.outBytes = 1 * pairing.getGT().getLengthInBytes() + 2 * pairing.getG1().getLengthInBytes();		
 	}
+	
+	private static ArrayList<Element> multiply(ArrayList<Element> firstPolynomial,ArrayList<Element> secondPolynomial, Field Zp) {
+
+    ArrayList<Element> array =new ArrayList<Element>(firstPolynomial.size()+secondPolynomial.size()-1);
+    for (int i=0;i<firstPolynomial.size()+secondPolynomial.size()-1;i++)
+        array.add(i, Zp.newZeroElement());
+
+    for (int i = 0; i < firstPolynomial.size(); i++)
+
+        for (int j = 0; j < secondPolynomial.size(); j++)
+
+            array.set(i+j, firstPolynomial.get(i).mulZn(secondPolynomial.get(j)).add(array.get(i+j)));
+
+    return array;
+	}
+	
+	private static ArrayList<Element> computeFi(Element k, Element[] ids)	{
+				
+		Element one = k.getField().newOneElement().getImmutable();
+		
+		ArrayList<Element> firstPolynomial = new ArrayList<Element>();
+		firstPolynomial.add(one);
+		firstPolynomial.add(ids[0].getImmutable());
+		
+		for (int i=1; i<ids.length; i++)	{
+			ArrayList<Element> secondPolynomial = new ArrayList<Element>();
+			secondPolynomial.add(one);
+			secondPolynomial.add(ids[i].getImmutable());			
+			firstPolynomial = multiply(firstPolynomial, secondPolynomial, k.getField());
+		}
+		
+		for (int i=0; i<firstPolynomial.size(); i++)
+			firstPolynomial.set(i, firstPolynomial.get(i).mulZn(k));
+	
+		return firstPolynomial;
+	}
 
 	@Override
 	public byte[] process(byte[] in, int inOff, int inLength)
@@ -47,17 +86,26 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
  	 	  Element v = publicKey.getV().getImmutable();
  	 	  Element h = publicKey.getH().getImmutable();
  	 	  Element omega = publicKey.getOmega().getImmutable();
- 	 	  Element theta = publicKey.getTheta().getImmutable();
  	 	  Element K = v.powZn(k).getImmutable();
  	 	  Element C1 = omega.powZn(k.negate()).getImmutable();
  	 	  Element[] ids = encryptionParams.getIdentities();
+ 	 	  ArrayList<Element> fi = computeFi(k, ids);
  	 	  
- 	 	  Element tmp = k.mulZn(theta.add(ids[0])).getImmutable();
+ 	 	  Element C2 = h.powZn(fi.get(fi.size()-1)).getImmutable();
+ 	 	  
+ 	 	  for (int i=1; i<fi.size(); i++)	{
+ 	 	  	Element tmp = publicKey.getMAt(i-1).powZn(fi.get(fi.size()-1-i)).getImmutable();
+ 	 	  	C2 = C2.mul(tmp).getImmutable();
+ 	 	  }
+ 	 	  
+ 	 	  System.out.println("Encap: " + K);
+ 	 	  
+ 	 	  // Direct formula with theta to test purpose
+/* 	 	  Element tmp = k.mulZn(theta.add(ids[0])).getImmutable();
  	 	  for (int i=1; i<ids.length; i++)
  	 		  tmp = tmp.mulZn(theta.add(ids[i])).getImmutable();
  	 	  
- 	 	  Element C2 = h.powZn(tmp).getImmutable();
- 	 	  System.out.println(K);
+ 	 	  Element C2 = h.powZn(tmp).getImmutable();*/
  	 	  
  	 	  ByteArrayOutputStream bytes = new ByteArrayOutputStream(getOutputBlockSize());
  	 	  try	{
@@ -75,8 +123,8 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
 			CD07SecretKeyParameters secretKey = decryptionParams.getSecretKey();	
 			CD07PublicKeyParameters publicKey = secretKey.getPublicKey();
  	 	  Element h = publicKey.getH().getImmutable();
- 	 	  Element theta = publicKey.getTheta().getImmutable();
  	 	  Element[] ids = decryptionParams.getIdentities();	
+	  	Element[] idsExclude = new Element[ids.length-1];
  	 	  Element id = secretKey.getIdentity().getImmutable();
  	 	  Element skid = secretKey.getSkid().getImmutable();
 			
@@ -85,19 +133,22 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
 			Element C1 = streamParser.readG1Element();
 			Element C2 = streamParser.readG1Element();
 			
-			Element tmp1 = pairing.getZr().newOneElement().getImmutable();
-	  	Element tmp2 = pairing.getZr().newOneElement().getImmutable();
+	  	int count=0;
 	  	for (int i=0; i<ids.length; i++)	{	
 	  		 if (!ids[i].equals(id))	{
-	  			 tmp1 = tmp1.mulZn(ids[i]).getImmutable();
-	  			 tmp2 = tmp2.mulZn(theta.add(ids[i])).getImmutable();
+	  			 idsExclude[count++] = ids[i];
 	  		 }
 	  	}
 	  	
-	  	Element tmp3 = theta.invert().mulZn(tmp2.sub(tmp1)).getImmutable();
-	  	Element inv_tmp1 = tmp1.invert().getImmutable();
+	  	ArrayList<Element> fi = computeFi(pairing.getZr().newOneElement().getImmutable(), idsExclude);
+	  	Element inv_tmp1 = fi.remove(fi.size()-1).invert().getImmutable();
+	  	Element hp1 = h.powZn(fi.get(fi.size()-1)).getImmutable();
+	  	for (int i=1; i<fi.size(); i++)	{
+ 	 	  	Element tmp = publicKey.getMAt(i-1).powZn(fi.get(fi.size()-1-i)).getImmutable();
+ 	 	  	hp1 = hp1.mul(tmp).getImmutable();
+ 	 	  }
 	  	 
-	  	Element tmp4 = pairing.pairing(C1, h.powZn(tmp3)).getImmutable();
+	  	Element tmp4 = pairing.pairing(C1, hp1).getImmutable();
 	  	Element tmp5 = pairing.pairing(skid, C2).getImmutable();
 	  	Element K = tmp4.mul(tmp5).powZn(inv_tmp1).getImmutable();
 	  	System.out.println("Decap K: " + K);

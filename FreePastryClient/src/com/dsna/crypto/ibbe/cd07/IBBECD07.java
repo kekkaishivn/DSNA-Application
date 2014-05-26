@@ -1,5 +1,6 @@
 package com.dsna.crypto.ibbe.cd07;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import it.unisa.dia.gas.crypto.kem.KeyEncapsulationMechanism;
@@ -51,7 +52,6 @@ public class IBBECD07 {
     }
     return elements;
 	}
-
 
 	public CipherParameters extract(AsymmetricCipherKeyPair keyPair, String id) {
 	// Extract -> Secret Key for Identity "01001101"
