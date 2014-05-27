@@ -5,17 +5,17 @@ import java.util.HashMap;
 public class Notification extends BaseEntity {
 
 	public static final int TYPE = 4;
+	public static final String DHTID = "DHTID";
+	public static final String GOOGLEID = "GOOGLEID";
 	private NotificationType type;
 	private String description;
 	private HashMap<String,String> arguments;
-	//private Set<String> toIds;
-	
+
 	Notification(String ownerId, long timeStamp, String description, NotificationType type)	{
 		super(ownerId, timeStamp);
 		this.description = description;
 		this.type = type;
 		arguments = new HashMap<String,String>();
-		//this.toIds = toIds;
 	}
 
 	public NotificationType getNotificationType() {

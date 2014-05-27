@@ -43,13 +43,13 @@ import rice.pastry.commonapi.PastryIdFactory;
 
 public class SocialServiceImpl implements SocialService, ScribeEventListener, PastEventListener {
 
-	private PastryNode pastryNode;
-	private DSNAPastClient storageHandler;
-	private CloudStorageService cloudHandler;
-	private DSNAScribeClient broadcaster;
-	private SocialEventListener eventListener;
+	protected PastryNode pastryNode;
+	protected DSNAPastClient storageHandler;
+	protected CloudStorageService cloudHandler;
+	protected DSNAScribeClient broadcaster;
+	protected SocialEventListener eventListener;
 	private PastryIdFactory idf;
-	private SocialProfile userProfile;
+	protected SocialProfile userProfile;
 	private HashMap<String,Long> topicsLastSeq = new HashMap<String,Long>();
 	
 	protected SocialServiceImpl(PastryNode pastryNode, SocialEventListener eventListener, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
@@ -99,7 +99,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 	
 	protected void postStatus(final Id statusId, final String status) throws IOException {
-		String myUserName = userProfile.getOwnerUsername();
+
 		Status theStatus = userProfile.createStatus(status);
 		
 		if (cloudHandler!=null)	{
@@ -107,7 +107,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 			String id = cloudHandler.uploadContentToFriendOnlyFolder(statusId.toStringFull()+".txt", "text/plain", "DSNA status", content);
   		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
   		notification.setDescription(statusId.toStringFull());
-  		notification.setArgument("cloudId", id);
+  		notification.setArgument(Notification.GOOGLEID, id);
   		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);			
 			return;
 		}		
@@ -118,7 +118,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
     		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
     		notification.setDescription(statusId.toStringFull());
     		System.out.println(statusId.toStringFull());
-    		notification.setArgument("dhtId", statusId.toStringFull());
+    		notification.setArgument(Notification.DHTID, statusId.toStringFull());
     		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);
       }
 
@@ -129,7 +129,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		
 	}
 	
-	private InputStream createInputStreamFromObject(Serializable obj) throws IOException	{
+	public InputStream createInputStreamFromObject(Serializable obj) throws IOException	{
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
     oos.writeObject(obj);
@@ -390,7 +390,5 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		// TODO Auto-generated method stub
 		this.cloudHandler = cloudHandler;
 	}
-
-
 
 }

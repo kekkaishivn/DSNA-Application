@@ -36,6 +36,50 @@ public class SocialServiceFactory {
 		return newDSNASocialService(bindPort, bootPort, bootIP, eventListener, user, new HashMap<String,Long>(), cloudHandler);
 	}
 	
+	public IdBasedSecureSocialService newDSNAIdBasedSecureSocialService(int bindPort, int bootPort, String bootIP, SocialEventListener eventListener, String username, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
+		PastryIdFactory idf = new rice.pastry.commonapi.PastryIdFactory(env);
+		SocialProfile user = SocialProfile.getSocialProfile(username, idf);
+		return newDSNAIdBasedSecureSocialService(bindPort, bootPort, bootIP, eventListener, user, new HashMap<String,Long>(), cloudHandler);
+	}
+	
+	public IdBasedSecureSocialService newDSNAIdBasedSecureSocialService(int bindPort, int bootPort, String bootIP, SocialEventListener eventListener, SocialProfile user, HashMap<String,Long> lastSeqs, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
+		DSNAScribeFactory scribeFactory = new DSNAScribeFactory(env);
+		DSNAPastFactory pastFactory = new DSNAPastFactory(env);
+		
+	    // Factory generate the NodeIds Randomly
+	    NodeIdFactory nidFactory = new RandomNodeIdFactory(env);
+
+	    // construct the PastryNodeFactory, this is how we use rice.pastry.socket
+	    InternetPastryNodeFactory factory = new InternetPastryNodeFactory(nidFactory,
+	    		bindPort, env);
+	    
+	    // Contruct pastry node
+	    PastryNode pastryNode = factory.newNode();
+	    
+	    // Create social service node
+	    IdBasedSecureSocialServiceImpl theService = new IdBasedSecureSocialServiceImpl(user, lastSeqs, pastryNode, eventListener, cloudHandler);
+	    
+	    InetSocketAddress bootAddress = new InetSocketAddress(InetAddress.getByName(bootIP), bootPort);
+	    
+	    pastryNode.boot(bootAddress);
+
+		// the node may require sending several messages to fully boot into the ring
+		synchronized(pastryNode) {
+			while(!pastryNode.isReady() && !pastryNode.joinFailed()) {
+				// delay so we don't busy-wait
+				pastryNode.wait(200);
+	
+				// abort if can't join
+				if (pastryNode.joinFailed()) {
+					throw pastryNode.joinFailedReason();
+				}
+			}       
+		}
+
+		System.out.println("Finished creating new DSNA social service: " + theService);
+		return theService;
+	}
+	
 	public SocialService newDSNASocialService(int bindPort, int bootPort, String bootIP, SocialEventListener eventListener, SocialProfile user, HashMap<String,Long> lastSeqs, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
 		DSNAScribeFactory scribeFactory = new DSNAScribeFactory(env);
 		DSNAPastFactory pastFactory = new DSNAPastFactory(env);
@@ -72,7 +116,6 @@ public class SocialServiceFactory {
 
 		System.out.println("Finished creating new DSNA social service: " + theService);
 		return theService;
-		
 	}
 
 }

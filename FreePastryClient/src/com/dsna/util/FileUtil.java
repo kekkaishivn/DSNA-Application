@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -37,7 +38,7 @@ public class FileUtil {
     bos.close();
 	}
 	
-	public static Object readObject(FileInputStream streamIn) throws IOException, ClassNotFoundException	{
+	public static Object readObject(InputStream streamIn) throws IOException, ClassNotFoundException	{
 		ObjectInputStream objectinputstream = null; 
     objectinputstream = new ObjectInputStream(streamIn);
     Object result = (Object)objectinputstream.readObject();
