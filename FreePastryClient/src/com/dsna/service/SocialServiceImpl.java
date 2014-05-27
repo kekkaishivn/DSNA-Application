@@ -20,6 +20,7 @@ import com.dsna.dht.scribe.DSNAScribeContent;
 import com.dsna.dht.scribe.DSNAScribeFactory;
 import com.dsna.dht.scribe.ScribeEventListener;
 import com.dsna.entity.BaseEntity;
+import com.dsna.entity.Location;
 import com.dsna.entity.Message;
 import com.dsna.entity.Notification;
 import com.dsna.entity.NotificationType;
@@ -48,9 +49,9 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	protected CloudStorageService cloudHandler;
 	protected DSNAScribeClient broadcaster;
 	protected SocialEventListener eventListener;
-	private PastryIdFactory idf;
+	protected PastryIdFactory idf;
 	protected SocialProfile userProfile;
-	private HashMap<String,Long> topicsLastSeq = new HashMap<String,Long>();
+	protected HashMap<String,Long> topicsLastSeq = new HashMap<String,Long>();
 	
 	protected SocialServiceImpl(PastryNode pastryNode, SocialEventListener eventListener, CloudStorageService cloudHandler) throws IOException, InterruptedException, JoinFailedException	{
 		this.pastryNode = pastryNode;
@@ -88,7 +89,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	
 	@Override
 	public void postStatus(String status) throws IOException {
-		Id statusId = idf.buildId(status + userProfile.getOwnerUsername());
+		Id statusId = idf.buildId(DateTimeUtil.getCurrentTimeStamp() + userProfile.getOwnerUsername() + status);
 		postStatus(statusId, status);
 	}
 	
@@ -107,7 +108,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 			String id = cloudHandler.uploadContentToFriendOnlyFolder(statusId.toStringFull()+".txt", "text/plain", "DSNA status", content);
   		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
   		notification.setDescription(statusId.toStringFull());
-  		notification.setArgument(Notification.GOOGLEID, id);
+  		notification.setFileId(Location.GOOGLE_CLOUD, id);
   		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);			
 			return;
 		}		
@@ -118,7 +119,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
     		Notification notification = userProfile.createNotification(NotificationType.NEWFEEDS);
     		notification.setDescription(statusId.toStringFull());
     		System.out.println(statusId.toStringFull());
-    		notification.setArgument(Notification.DHTID, statusId.toStringFull());
+    		notification.setFileId(Location.DHT, statusId.toStringFull());
     		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);
       }
 

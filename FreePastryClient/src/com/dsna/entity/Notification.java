@@ -4,18 +4,17 @@ import java.util.HashMap;
 
 public class Notification extends BaseEntity {
 
+	private static final long serialVersionUID = -1574287232308277685L;
 	public static final int TYPE = 4;
-	public static final String DHTID = "DHTID";
-	public static final String GOOGLEID = "GOOGLEID";
 	private NotificationType type;
 	private String description;
-	private HashMap<String,String> arguments;
+	private HashMap<String,String> fileIdsMap;
 
 	Notification(String ownerId, long timeStamp, String description, NotificationType type)	{
 		super(ownerId, timeStamp);
 		this.description = description;
 		this.type = type;
-		arguments = new HashMap<String,String>();
+		fileIdsMap = new HashMap<String,String>();
 	}
 
 	public NotificationType getNotificationType() {
@@ -51,12 +50,12 @@ public class Notification extends BaseEntity {
 					 else return true;
 	}
 	
-	public void setArgument(String argument, String value)	{
-		arguments.put(argument, value);
+	public void setFileId(String location, String id)	{
+		fileIdsMap.put(location, id);
 	}
 	
-	public String getArgument(String argument)	{
-		return arguments.get(argument);
+	public String getGetId(String location)	{
+		return fileIdsMap.get(location);
 	}
 	
 	@Override

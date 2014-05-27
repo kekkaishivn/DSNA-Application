@@ -1,11 +1,18 @@
 package com.dsna.entity;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
 import rice.pastry.commonapi.PastryIdFactory;
 
+import com.dsna.entity.encrypted.EncryptedEntity;
 import com.dsna.util.DateTimeUtil;
 
 public class SocialProfile extends BaseEntity {
@@ -160,8 +167,8 @@ public class SocialProfile extends BaseEntity {
 	public HashMap<String, String> getFriendsContacts()	{
 		HashMap<String, String> contacts = new HashMap<String, String>();
 		for (String friendId:friendProfiles.keySet())	{
-			SocialProfile friend = friendProfiles.get(friendId);
-			contacts.put(friend.ownerUsername, friendId);
+			SocialProfile friendProfile = friendProfiles.get(friendId);
+			contacts.put(friendProfile.ownerUsername, friendId);
 		}		
 		return contacts;
 	}
@@ -191,6 +198,9 @@ public class SocialProfile extends BaseEntity {
 				case NEWLIKE:
 					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"New like in "+ownerId, type);
+				case SESSION_KEY_CHANGE:
+					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
+							"Session Key change in "+ownerId, type);
 				default:
 					return null;
 			}
@@ -207,6 +217,10 @@ public class SocialProfile extends BaseEntity {
 		status.ownerDisplayName = ownerDisplayName;
 		status.ownerUsername = ownerUsername;
 		return status;
+	}
+	
+	public EncryptedEntity createEncryptedEntity(BaseEntity entity, byte[] key, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, IOException	{
+		return new EncryptedEntity(ownerId, DateTimeUtil.getCurrentTimeStamp(), entity, key, algorithm);
 	}
 	
 	public Comment createComment(String content, String toObjectId)	{

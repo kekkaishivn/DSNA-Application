@@ -48,6 +48,7 @@ import com.dsna.dht.scribe.DSNAScribeContent;
 import com.dsna.dht.scribe.DSNAScribeFactory;
 import com.dsna.entity.BaseEntity;
 import com.dsna.entity.IpUpdateNotification;
+import com.dsna.entity.Location;
 import com.dsna.entity.Message;
 import com.dsna.entity.Notification;
 import com.dsna.entity.NotificationType;
@@ -748,8 +749,11 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		switch (notification.getNotificationType())	{
 			case NEWFEEDS:
 				//JOptionPane.showMessageDialog(this, notification.getArgument("objectId"));
-				String objectId = notification.getArgument("objectId");
-				this.fetchStatus(objectId);
+				String googleId = notification.getGetId(Location.GOOGLE_CLOUD);
+				if (googleId!=null)
+					System.out.println("GoogleId:" + googleId);
+				else 
+					fetchStatus(notification.getGetId(Location.DHT));
 				break;
 			default:
 		}
