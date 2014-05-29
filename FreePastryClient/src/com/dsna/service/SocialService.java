@@ -7,6 +7,7 @@ import java.util.HashMap;
 import rice.Continuation;
 import rice.p2p.past.PastContent;
 
+import com.dsna.entity.BaseEntity;
 import com.dsna.entity.Message;
 import com.dsna.entity.SocialProfile;
 import com.dsna.storage.cloud.CloudStorageService;
@@ -30,6 +31,7 @@ public interface SocialService {
 	public void subscribe(String topic);
 	public void unsubscribe(String topic);
 	public void initSubscribe();
+	public void broadcast(String topicId, BaseEntity msg, boolean isCaching);
 	public HashMap<String,String> getFriendsContacts();
 	public void updateProfile(SocialProfile edittedProfile);
 	public SocialProfile getUserProfile();

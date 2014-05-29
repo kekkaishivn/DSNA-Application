@@ -1,5 +1,7 @@
 package com.dsna.service;
 
+import javax.crypto.Cipher;
+
 import com.dsna.entity.encrypted.EncryptedEntity;
 import com.dsna.entity.encrypted.KeyInfo;
 

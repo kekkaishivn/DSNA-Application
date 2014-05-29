@@ -9,13 +9,15 @@ public class KeyInfo extends BaseEntity {
 	private static final long serialVersionUID = -4324693496844521885L;
 	public static final int TYPE = 7;	
 	private String keyId;
-	public byte[] values;
+	private byte[] values;
+	private String algorithm;
 	
-	public KeyInfo(String ownerUsername, long timeStamp, String keyId, byte[] values)	{
+	public KeyInfo(String ownerUsername, long timeStamp, String keyId, byte[] values, String algorithm)	{
 		super(ownerUsername, timeStamp);
 		this.ownerUsername = ownerUsername;
 		this.keyId = keyId;
 		this.values = Arrays.copyOf(values, 16);
+		this.algorithm = algorithm;
 	}
 
 	@Override
@@ -30,6 +32,14 @@ public class KeyInfo extends BaseEntity {
 	
 	public String getKeyId()	{
 		return keyId;
+	}
+	
+	public String getAlgorithm()	{
+		return algorithm;
+	}
+	
+	public byte[] getValues()	{
+		return values;
 	}
 	
 }

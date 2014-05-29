@@ -2,9 +2,11 @@ package com.dsna.entity.encrypted;
 
 import rice.pastry.commonapi.PastryIdFactory;
 
+import com.dsna.entity.Message;
 import com.dsna.entity.Notification;
 import com.dsna.entity.NotificationType;
 import com.dsna.entity.SocialProfile;
+import com.dsna.entity.Status;
 import com.dsna.entity.exception.UnsupportedNotificationTypeException;
 import com.dsna.util.DateTimeUtil;
 
@@ -20,13 +22,37 @@ public class IdbasedSecureSocialProfile extends SocialProfile {
 	
 	@Override
 	public Notification createNotification(NotificationType type) throws UnsupportedNotificationTypeException	{
+		Notification notification;
 		switch (type)	{
 		case SESSION_KEY_CHANGE:
-			return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
+			notification = new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 					"Session Key change in "+ownerId, type);
+			notification.setPreferEncrypted(false);
+			return notification;
 		default:
-			return super.createNotification(type);
+			notification = super.createNotification(type);
+			notification.setPreferEncrypted(true);
+			return notification;
 		}		
+	}
+	
+	@Override
+	public Message createMessage(String content, boolean isPrivate)	{
+		Message msg = super.createMessage(content, isPrivate);
+		msg.setPreferEncrypted(true);
+		return msg;
+	}
+	
+	@Override
+	public Message createMessage(String content)	{
+		return createMessage(content, true);
+	}
+	
+	@Override
+	public Status createStatus(String content)	{
+		Status status = super.createStatus(content);
+		status.setPreferEncrypted(true);
+		return status;
 	}
 
 	public static IdbasedSecureSocialProfile getSocialProfile(String username, PastryIdFactory idf)	{

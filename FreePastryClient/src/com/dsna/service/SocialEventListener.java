@@ -21,6 +21,7 @@ public interface SocialEventListener {
 	public void receiveBaseEntity(BaseEntity entity);
 	public void receiveInsertException(Exception e);
 	public void receiveLookupException(Exception e);
+	public void receiveBroadcastException(Exception e);
 	public void receiveLookupNull();
 	public void subscribeFailed(Topic topic);
 	public void subscribeFailed(Collection<Topic> topics);

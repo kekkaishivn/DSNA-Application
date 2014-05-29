@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
@@ -224,10 +225,15 @@ public class SocialProfile extends BaseEntity {
 			}
 	}
 	
-	public Message createMessage(String content)	{
+	public Message createMessage(String content, boolean isPrivate)	{
 		Message msg = new Message(ownerId, getOwnerUsername(), DateTimeUtil.getCurrentTimeStamp(), content);
 		msg.ownerDisplayName = ownerDisplayName;
+		msg.isPrivateMessage = isPrivate;
 		return msg;
+	}
+	
+	public Message createMessage(String content)	{
+		return createMessage(content, true);
 	}
 	
 	public Status createStatus(String content)	{
@@ -237,9 +243,10 @@ public class SocialProfile extends BaseEntity {
 		return status;
 	}
 	
-	public EncryptedEntity createEncryptedEntity(BaseEntity entity, String keyId, byte[] key, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, IOException	{
-		EncryptedEntity encrytedEntity = new EncryptedEntity(ownerId, DateTimeUtil.getCurrentTimeStamp(), entity, keyId, key, algorithm);
+	public EncryptedEntity createEncryptedEntity(BaseEntity entity, String keyId, Cipher cipher) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, IOException	{
+		EncryptedEntity encrytedEntity = new EncryptedEntity(ownerId, DateTimeUtil.getCurrentTimeStamp(), entity, keyId, cipher);
 		encrytedEntity.setOwnerUsername(ownerUsername);
+		encrytedEntity.setIsPrivateMessage(entity.isPrivateMessage);
 		return encrytedEntity;
 	}
 	

@@ -67,6 +67,7 @@ import com.dsna.p2p.scribe.DSNAScribeClient;
 import com.dsna.p2p.scribe.DSNAScribeContent;
 import com.dsna.p2p.scribe.DSNAScribeFactory;
 import com.dsna.service.IdBasedSecureSocialService;
+import com.dsna.service.IdBasedSecureSocialServiceImpl;
 import com.dsna.service.SocialService;
 import com.dsna.service.SocialServiceFactory;
 import com.dsna.service.SocialServiceImpl;
@@ -594,26 +595,14 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	
 	private void postStatus() {
 		try {
-			serviceHandler.postStatus(textArea_Status.getText(), currentSessionKey.getKeyId(), currentSessionKey.values, EncryptedEntity.AESAlgorithm);
+			serviceHandler.postStatus(textArea_Status.getText());
 		} catch (UserRecoverableAuthIOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
 		textArea_Status.setText("");
 	}
 	
@@ -843,7 +832,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			String encodedSysPublicKey = FileUtil.readString(new FileInputStream("SystemPublic.txt"));
 			System.out.println(encodedSysPublicKey);
 			CipherParameters[] publicKeys = ASN1Util.extractPublicKey(ASN1Util.decodeIBESysPublicParams(encodedSysPublicKey));
-			serviceHandler.distributeSessionKey(publicKeys[1], new Continuation<KeyInfo, Exception>() {
+			serviceHandler.changeAndDistributeSessionKey(IdBasedSecureSocialService.AESAlgorithm ,publicKeys[1], new Continuation<KeyInfo, Exception>() {
         public void receiveResult(KeyInfo result) {          
       		currentSessionKey = result;
       		System.out.println(currentSessionKey.getKeyId());
@@ -858,6 +847,12 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+	}
+
+	@Override
+	public void receiveBroadcastException(Exception e) {
+		// TODO Auto-generated method stub
 		
 	}
 }

@@ -115,7 +115,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 					String id = cloudHandler.uploadContentToFriendOnlyFolder(statusId.toStringFull()+".txt", "text/plain", "DSNA status", content);
 		  		notification.putFileId(location, id);
 				}
-	  		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);
+				broadcast(userProfile.getToFollowNotificationTopic(), notification, true);
 			} catch (UnsupportedNotificationTypeException e) {
 				eventListener.receiveInsertException(e);
 			}
@@ -129,9 +129,8 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 				try {
 					notification = userProfile.createNotification(NotificationType.NEWFEEDS);
 	    		notification.setDescription(statusId.toStringFull());
-	    		System.out.println(statusId.toStringFull());
 	    		notification.putFileId(Location.DHT, statusId.toStringFull());
-	    		broadcaster.publish(userProfile.getToFollowNotificationTopic(), notification, true);					
+	    		broadcast(userProfile.getToFollowNotificationTopic(), notification, true);					
 				} catch (UnsupportedNotificationTypeException e) {
 					eventListener.receiveInsertException(e);
 				}
@@ -160,7 +159,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		Message message = userProfile.createMessage(msg);
 		message.setConversation(userProfile.getOwnerUsername());
 		if (topicId!=null)	{
-			broadcaster.publish(topicId, message, true);
+			broadcast(topicId, message, true);
 			return message;
 		}
 		return null;
@@ -173,7 +172,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		Message message = userProfile.createMessage(msg);
 		message.setConversation(userProfile.getOwnerUsername());
 		if (topicId!=null)	{
-			broadcaster.publish(topicId, message, true);
+			broadcast(topicId, message, true);
 			return message;
 		}
 		return null;
@@ -395,6 +394,11 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		if (cloudHandlers.containsKey(cloudLocation))
 			cloudHandlers.get(cloudLocation).getFile(id, action);		
 		action.receiveException(new UnsupportedCloudException("Not supported yet - " + cloudLocation));
+	}
+
+	@Override
+	public void broadcast(String topicId, BaseEntity msg, boolean isCaching) {
+		broadcaster.publish(topicId, msg, isCaching);
 	}
 
 }

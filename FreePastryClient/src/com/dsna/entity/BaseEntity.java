@@ -10,10 +10,14 @@ abstract public class BaseEntity implements Serializable {
 	protected String ownerId;
 	String ownerDisplayName;
 	protected String ownerUsername;
+	boolean preferEncrypted;
+	boolean isPrivateMessage;
 	
 	protected BaseEntity(String ownerId, long timeStamp)	{
 		this.ownerId = ownerId;
 		this.timeStamp = timeStamp;
+		preferEncrypted = false;
+		isPrivateMessage = false;
 	}	
 	
 	abstract public boolean isHigherPriority(BaseEntity other);
@@ -33,5 +37,21 @@ abstract public class BaseEntity implements Serializable {
 
 	public void setOwnerUsername(String ownerUsername) {
 		this.ownerUsername = ownerUsername;
+	}
+	
+	public boolean getPreferEncrypted()	{
+		return preferEncrypted;
+	}
+	
+	public boolean isPrivateMessage()	{
+		return isPrivateMessage;
+	}
+	
+	public void setPreferEncrypted(boolean preferEncrypted)	{
+		this.preferEncrypted = preferEncrypted;
+	}
+	
+	public void setIsPrivateMessage(boolean isPrivateMessage)	{
+		this.isPrivateMessage = isPrivateMessage;
 	}
 }

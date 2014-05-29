@@ -19,21 +19,16 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class EncryptedEntity extends BaseEntity {
 
-	public static final String AESAlgorithm = "AES";
-	public static final String DESAlgorithm = "DES";
 	private static final long serialVersionUID = -1502144610375189829L;
 	public static final int TYPE = 6;	
 	private String keyId;
 	private HashMap<String,String> keyEncapsulationFileIdsMap;
 	SealedObject sealedObj;
 	
-	public EncryptedEntity(String ownerId, long timeStamp, BaseEntity entity, String keyId, byte[] key, String algorithm) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, IOException	{
+	public EncryptedEntity(String ownerId, long timeStamp, BaseEntity entity, String keyId, Cipher cipher) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, IOException	{
 		super(ownerId, timeStamp);
 		this.keyId = keyId;
 		keyEncapsulationFileIdsMap = new HashMap<String,String>();
-		SecretKey k = new SecretKeySpec(key, algorithm);
-		Cipher cipher = Cipher.getInstance(algorithm);
-		cipher.init(Cipher.ENCRYPT_MODE, k);
 		sealedObj = new SealedObject(entity, cipher);
 	}	
 	

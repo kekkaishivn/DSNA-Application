@@ -10,13 +10,15 @@ public class KeyHeader extends BaseEntity {
 	public byte[] header;
 	private String keyId;
 	private String[] ids;
+	private String algorithm;
 	
-	public KeyHeader(String ownerUsername, long timeStamp, byte[] headers, String[] ids, String keyId)	{
+	public KeyHeader(String ownerUsername, long timeStamp, byte[] headers, String[] ids, String keyId, String algorithm)	{
 		super(ownerUsername, timeStamp);
 		this.ownerUsername = ownerUsername;
 		this.header = Arrays.copyOf(headers, headers.length);
 		this.ids = ids;
 		this.keyId = keyId;
+		this.algorithm = algorithm;
 	}
 
 	@Override
@@ -35,6 +37,10 @@ public class KeyHeader extends BaseEntity {
 	
 	public String getKeyId()	{
 		return keyId;
+	}
+	
+	public String getAlgorithm()	{
+		return algorithm;
 	}
 
 }
