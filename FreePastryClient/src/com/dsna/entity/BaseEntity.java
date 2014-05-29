@@ -7,9 +7,9 @@ abstract public class BaseEntity implements Serializable {
 	static final long serialVersionUID = 5098466384372731320L;
 	
 	long timeStamp;
-	String ownerId;
+	protected String ownerId;
 	String ownerDisplayName;
-	String ownerUsername;
+	protected String ownerUsername;
 	
 	protected BaseEntity(String ownerId, long timeStamp)	{
 		this.ownerId = ownerId;
@@ -31,7 +31,7 @@ abstract public class BaseEntity implements Serializable {
 	    return this.timeStamp;
 	}
 
-	public void setOwnerDisplayName(String ownerDisplayName) {
-	    this.ownerDisplayName = ownerDisplayName;
+	public void setOwnerUsername(String ownerUsername) {
+		this.ownerUsername = ownerUsername;
 	}
 }

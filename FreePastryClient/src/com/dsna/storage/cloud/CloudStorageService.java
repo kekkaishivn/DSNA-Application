@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
+import rice.Continuation;
+import rice.p2p.past.PastContent;
+
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 
 public interface CloudStorageService {
@@ -16,5 +19,5 @@ public interface CloudStorageService {
 	public void removePermission(String fileId, String userId, String permission) throws UserRecoverableAuthIOException, IOException;
 	public String createFolder(String title, String description, String parentId)	throws UserRecoverableAuthIOException, IOException;
 	public String createFile(String title, String type, String description, String parentId, InputStream content) throws UserRecoverableAuthIOException, IOException;
-	public InputStream getFile(String fileId) throws UserRecoverableAuthIOException, IOException;
+	public void getFile(String fileId, Continuation<InputStream, Exception> action);
 }

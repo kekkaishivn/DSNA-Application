@@ -1,4 +1,4 @@
-package com.dsna.dht.scribe;
+package com.dsna.p2p.scribe;
 
 import rice.p2p.scribe.ScribeMultiClient;
 

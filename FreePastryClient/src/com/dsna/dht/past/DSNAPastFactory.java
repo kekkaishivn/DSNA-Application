@@ -2,7 +2,7 @@ package com.dsna.dht.past;
 
 import java.io.IOException;
 
-import com.dsna.dht.scribe.DSNAScribeClient;
+import com.dsna.p2p.scribe.DSNAScribeClient;
 import com.dsna.service.SocialEventListener;
 
 import rice.environment.Environment;

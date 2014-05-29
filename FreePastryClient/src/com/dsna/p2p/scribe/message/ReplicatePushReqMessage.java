@@ -1,4 +1,4 @@
-package com.dsna.dht.scribe.message;
+package com.dsna.p2p.scribe.message;
 
 import java.io.IOException;
 

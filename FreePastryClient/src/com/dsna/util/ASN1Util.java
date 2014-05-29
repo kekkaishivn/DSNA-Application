@@ -291,8 +291,11 @@ public static PS06PublicKeyParameters toPs06PublicKey(IBEPublicParameters ps06Pu
 		String curveParamDescription = new String(ps06SecretParams.getElementAt(0).getRawData());
 		PropertiesParameters curveParams = new PropertiesParameters();
 		curveParams.load(new ByteArrayInputStream(curveParamDescription.getBytes()));
-		if (!curveParams.equals(publicKey.getParameters().getCurveParams()))
+		if (!curveParams.equals(publicKey.getParameters().getCurveParams()))	{
+			System.out.println(curveParams);
+			System.out.println(publicKey.getParameters().getCurveParams());
 			throw new UnsupportedFormatException("Inconsistent curve params between public and private params");
+		}
 		Pairing pairing = PairingFactory.getPairing(curveParams);
 		 
 		String identity = new String(ps06SecretParams.getElementAt(1).getRawData());

@@ -2,6 +2,7 @@ package com.dsna.service;
 
 import java.util.Collection;
 
+import com.dsna.entity.BaseEntity;
 import com.dsna.entity.Message;
 import com.dsna.entity.Notification;
 import com.dsna.entity.SocialProfile;
@@ -17,6 +18,7 @@ public interface SocialEventListener {
 	public void receiveNotification(Notification notification);
 	public void receiveStatus(Status status);
 	public void receiveSocialProfile(SocialProfile profile);
+	public void receiveBaseEntity(BaseEntity entity);
 	public void receiveInsertException(Exception e);
 	public void receiveLookupException(Exception e);
 	public void receiveLookupNull();

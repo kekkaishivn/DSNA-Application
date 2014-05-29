@@ -89,6 +89,7 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
  	 	  Element K = v.powZn(k).getImmutable();
  	 	  Element C1 = omega.powZn(k.negate()).getImmutable();
  	 	  Element[] ids = encryptionParams.getIdentities();
+ 	 	  
  	 	  ArrayList<Element> fi = computeFi(k, ids);
  	 	  
  	 	  Element C2 = h.powZn(fi.get(fi.size()-1)).getImmutable();
@@ -135,6 +136,9 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
 			
 	  	int count=0;
 	  	for (int i=0; i<ids.length; i++)	{	
+	  		 if (count>=idsExclude.length)
+	  			 throw new InvalidCipherTextException();
+	  		 
 	  		 if (!ids[i].equals(id))	{
 	  			 idsExclude[count++] = ids[i];
 	  		 }

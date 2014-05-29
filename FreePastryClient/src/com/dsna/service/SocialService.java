@@ -1,6 +1,7 @@
 package com.dsna.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import rice.Continuation;
@@ -22,6 +23,7 @@ public interface SocialService {
 	public void postStatus(String id, String status) throws UserRecoverableAuthIOException, IOException;
 	public void lookupById(String id, Continuation<PastContent, Exception> action);
 	public void lookupByName(String name, Continuation<PastContent, Exception> action);
+	public void lookupById(String location, String id, Continuation<InputStream, Exception> action);
 	public boolean addFriend(SocialProfile friend);
 	public Message sendMessage(String friendId, String msg);
 	public Message sendMessageToConversation(String conversationName, String msg);
@@ -29,13 +31,10 @@ public interface SocialService {
 	public void unsubscribe(String topic);
 	public void initSubscribe();
 	public HashMap<String,String> getFriendsContacts();
-	public void publish(String topic, String msg);
 	public void updateProfile(SocialProfile edittedProfile);
 	public SocialProfile getUserProfile();
 	public void pushProfileToDHT();
-	public void setCloudHandler(CloudStorageService cloudHandler);
+	public void addCloudHandler(String cloudLocation, CloudStorageService cloudHandler);
 	public void logout();
-	//public boolean viewOfflineMessage();
-	//public boolean sendFile();
 
 }

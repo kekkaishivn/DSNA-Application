@@ -1,4 +1,4 @@
-package com.dsna.dht.scribe.message;
+package com.dsna.p2p.scribe.message;
 
 import java.io.IOException;
 
@@ -9,8 +9,6 @@ import rice.p2p.commonapi.rawserialization.OutputBuffer;
 import rice.p2p.scribe.ScribeContent;
 import rice.p2p.scribe.Topic;
 import rice.p2p.scribe.messaging.ScribeMessage;
-import rice.p2p.scribe.rawserialization.JavaSerializedScribeContent;
-import rice.p2p.scribe.rawserialization.RawScribeContent;
 import rice.p2p.scribe.rawserialization.ScribeContentDeserializer;
 
 /**
@@ -22,8 +20,8 @@ import rice.p2p.scribe.rawserialization.ScribeContentDeserializer;
  *
  * @author Tien Dat Le
  */
-public class ReplicatePullReqMessage extends ScribeMessage {
-  public static final short TYPE = 23;
+public class ReplicatePushACKMessage extends ScribeMessage {
+  public static final short TYPE = 21;
 
   /**
    * Constructor which takes a unique integer Id
@@ -32,12 +30,12 @@ public class ReplicatePullReqMessage extends ScribeMessage {
    * @param source The source address
    * @param dest The destination address
    */  
-  public ReplicatePullReqMessage(NodeHandle source, Topic topic) {
+  public ReplicatePushACKMessage(NodeHandle source, Topic topic) {
     super(source, topic);
   }
 
   public String toString() {
-    return "ReplicateReqMessage: "+topic;
+    return "ReplicateACKMessage: "+topic+" - seq#"+topic.getSeq();
   }
 
   @Override
@@ -55,11 +53,11 @@ public class ReplicatePullReqMessage extends ScribeMessage {
     super.serialize(buf);     
   }
    
-  public static ReplicatePullReqMessage build(InputBuffer buf, Endpoint endpoint, ScribeContentDeserializer scd) throws IOException {
+  public static ReplicatePushACKMessage build(InputBuffer buf, Endpoint endpoint, ScribeContentDeserializer scd) throws IOException {
     byte version = buf.readByte();
     switch(version) {
       case 0:
-        return new ReplicatePullReqMessage(buf, endpoint, scd);
+        return new ReplicatePushACKMessage(buf, endpoint, scd);
       default:
         throw new IOException("Unknown Version: "+version);
     }
@@ -70,10 +68,7 @@ public class ReplicatePullReqMessage extends ScribeMessage {
    * make sure to build a serializeHelper() like in AnycastMessage/SubscribeMessage, and properly handle the 
    * version number.
    */
-  private ReplicatePullReqMessage(InputBuffer buf, Endpoint endpoint, ScribeContentDeserializer cd) throws IOException {
+  private ReplicatePushACKMessage(InputBuffer buf, Endpoint endpoint, ScribeContentDeserializer cd) throws IOException {
     super(buf, endpoint);
-    
-    // this can be done lazilly to be more efficient, must cache remaining bits, endpoint, cd, and implement own InputBuffer
-    //short contentType = buf.readShort();    
   }
 }

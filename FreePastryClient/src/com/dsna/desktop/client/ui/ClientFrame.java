@@ -3,12 +3,15 @@ package com.dsna.desktop.client.ui;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -16,6 +19,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
@@ -34,6 +39,9 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.JTabbedPane;
 
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+
 import rice.Continuation;
 import rice.environment.Environment;
 import rice.p2p.commonapi.NodeHandle;
@@ -42,10 +50,8 @@ import rice.p2p.scribe.ScribeContent;
 import rice.p2p.scribe.Topic;
 import rice.pastry.JoinFailedException;
 
+import com.dsna.crypto.asn1.exception.InvalidCertificateException;
 import com.dsna.dht.past.DSNAPastContent;
-import com.dsna.dht.scribe.DSNAScribeClient;
-import com.dsna.dht.scribe.DSNAScribeContent;
-import com.dsna.dht.scribe.DSNAScribeFactory;
 import com.dsna.entity.BaseEntity;
 import com.dsna.entity.IpUpdateNotification;
 import com.dsna.entity.Location;
@@ -54,10 +60,18 @@ import com.dsna.entity.Notification;
 import com.dsna.entity.NotificationType;
 import com.dsna.entity.SocialProfile;
 import com.dsna.entity.Status;
+import com.dsna.entity.encrypted.EncryptedEntity;
+import com.dsna.entity.encrypted.KeyInfo;
+import com.dsna.entity.exception.UnsupportedNotificationTypeException;
+import com.dsna.p2p.scribe.DSNAScribeClient;
+import com.dsna.p2p.scribe.DSNAScribeContent;
+import com.dsna.p2p.scribe.DSNAScribeFactory;
+import com.dsna.service.IdBasedSecureSocialService;
 import com.dsna.service.SocialService;
 import com.dsna.service.SocialServiceFactory;
 import com.dsna.service.SocialServiceImpl;
 import com.dsna.service.SocialEventListener;
+import com.dsna.util.ASN1Util;
 import com.dsna.util.FileUtil;
 import com.dsna.util.NetworkUtil;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
@@ -79,7 +93,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	private DefaultListModel listModel;
 	private JButton btnLaunch;
 	private JTabbedPane tabbedPane;
-	private SocialService serviceHandler;
+	private IdBasedSecureSocialService serviceHandler;
 	private Set<String> subscribedTopic;
 	private JTextField textField_FriendId;
 	private JTextField textField_StatusId;
@@ -192,9 +206,9 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 					SocialProfile user = ClientFrame.this.loadUserProfile(username+".dat");
 					HashMap<String,Long> lastSeqs = ClientFrame.this.loadTopicsCache(username+"_lastseq.dat");
 					if (user==null)
-						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, username, null);
+						serviceHandler = factory.newDSNAIdBasedSecureSocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, username);
 					else
-						serviceHandler = factory.newDSNASocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, user, lastSeqs, null);
+						serviceHandler = factory.newDSNAIdBasedSecureSocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, user, lastSeqs);
 					System.out.println(serviceHandler);
 					updateAccountInfo();
 					serviceHandler.initSubscribe();
@@ -523,6 +537,15 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		});
 		btnFetch.setBounds(446, 199, 117, 29);
 		panel_2.add(btnFetch);
+		
+		JButton btnChangeSessionKey = new JButton("change sKey");
+		btnChangeSessionKey.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				distributeSessionKey();
+			}
+		});
+		btnChangeSessionKey.setBounds(274, 169, 175, 29);
+		panel_2.add(btnChangeSessionKey);
 	}
 	
 	public void addFriend(String friendId)	{
@@ -571,11 +594,23 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	
 	private void postStatus() {
 		try {
-			this.serviceHandler.postStatus(textArea_Status.getText());
+			serviceHandler.postStatus(textArea_Status.getText(), currentSessionKey.getKeyId(), currentSessionKey.values, EncryptedEntity.AESAlgorithm);
 		} catch (UserRecoverableAuthIOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -749,11 +784,11 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		switch (notification.getNotificationType())	{
 			case NEWFEEDS:
 				//JOptionPane.showMessageDialog(this, notification.getArgument("objectId"));
-				String googleId = notification.getGetId(Location.GOOGLE_CLOUD);
+				String googleId = notification.getFileId(Location.GOOGLE_CLOUD);
 				if (googleId!=null)
 					System.out.println("GoogleId:" + googleId);
 				else 
-					fetchStatus(notification.getGetId(Location.DHT));
+					fetchStatus(notification.getFileId(Location.DHT));
 				break;
 			default:
 		}
@@ -792,6 +827,37 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	@Override
 	public void subscribeSuccess(Collection<Topic> topics) {
 		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void receiveBaseEntity(BaseEntity entity) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private KeyInfo currentSessionKey;
+	private void distributeSessionKey() {
+		// TODO Auto-generated method stub
+		try {
+			String encodedSysPublicKey = FileUtil.readString(new FileInputStream("SystemPublic.txt"));
+			System.out.println(encodedSysPublicKey);
+			CipherParameters[] publicKeys = ASN1Util.extractPublicKey(ASN1Util.decodeIBESysPublicParams(encodedSysPublicKey));
+			serviceHandler.distributeSessionKey(publicKeys[1], new Continuation<KeyInfo, Exception>() {
+        public void receiveResult(KeyInfo result) {          
+      		currentSessionKey = result;
+      		System.out.println(currentSessionKey.getKeyId());
+        }
+
+        public void receiveException(Exception result) {
+        	result.printStackTrace();
+        }
+			
+			});
+		} catch (IOException | InvalidCertificateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 }

@@ -4,18 +4,19 @@ import java.util.Arrays;
 
 import com.dsna.entity.BaseEntity;
 
-public class KeyInfo extends BaseEntity {
-
-	private static final long serialVersionUID = -4324693496844521885L;
-	public static final int TYPE = 7;	
-	private String keyId;
-	public byte[] values;
+public class KeyHeader extends BaseEntity {
 	
-	public KeyInfo(String ownerUsername, long timeStamp, String keyId, byte[] values)	{
+	public static final int TYPE = 8;	
+	public byte[] header;
+	private String keyId;
+	private String[] ids;
+	
+	public KeyHeader(String ownerUsername, long timeStamp, byte[] headers, String[] ids, String keyId)	{
 		super(ownerUsername, timeStamp);
 		this.ownerUsername = ownerUsername;
+		this.header = Arrays.copyOf(headers, headers.length);
+		this.ids = ids;
 		this.keyId = keyId;
-		this.values = Arrays.copyOf(values, 16);
 	}
 
 	@Override
@@ -25,11 +26,15 @@ public class KeyInfo extends BaseEntity {
 
 	@Override
 	public int getType() {
-		return 7;
+		return 8;
+	}
+	
+	public String[] getIds()	{
+		return ids;
 	}
 	
 	public String getKeyId()	{
 		return keyId;
 	}
-	
+
 }

@@ -1,4 +1,4 @@
-package com.dsna.dht.scribe;
+package com.dsna.p2p.scribe;
 
 import java.io.IOException;
 import java.net.InetAddress;

@@ -13,6 +13,7 @@ import javax.crypto.NoSuchPaddingException;
 import rice.pastry.commonapi.PastryIdFactory;
 
 import com.dsna.entity.encrypted.EncryptedEntity;
+import com.dsna.entity.exception.UnsupportedNotificationTypeException;
 import com.dsna.util.DateTimeUtil;
 
 public class SocialProfile extends BaseEntity {
@@ -43,9 +44,26 @@ public class SocialProfile extends BaseEntity {
 		setToDeliverMessageTopic(ownerId+"_TODELIVERMESSAGE");
 		setToFollowNotificationTopic(ownerId+"_TOFOLLOWNOTIFICATION");
 		setToFollowRealIpTopic(ownerId+"_TOFOLLOWREALIP");
-		ownerUsername = "USER1";
+		setOwnerUsername("USER1");
 		friendProfiles = new HashMap<String, SocialProfile>();
 		conversationMaps = new HashMap<String, String>();
+	}
+	
+	public SocialProfile(SocialProfile s)	{
+		super(s.ownerId, s.timeStamp);
+		setToDeliverMessageTopic(s.ToDeliverMessageTopic);
+		setToFollowNotificationTopic(s.ToFollowNotificationTopic);
+		setToFollowRealIpTopic(s.ToFollowRealIpTopic);		
+		setOwnerUsername(s.getOwnerUsername());
+		setWallObjectId(s.wallObjectId);
+		setProfileImgUrl(s.profileImgUrl);
+		about = s.about;
+		birthDay = s.birthDay;		
+		ownerDisplayName = s.ownerDisplayName;
+		friendProfiles = new HashMap<String, SocialProfile>();
+		conversationMaps = new HashMap<String, String>();		
+		friendProfiles.putAll(s.friendProfiles);
+		conversationMaps.putAll(s.conversationMaps);
 	}
 
 	public int getAge() {
@@ -111,7 +129,7 @@ public class SocialProfile extends BaseEntity {
 	public boolean addFriend(SocialProfile newFriend)	{
 			if (!friendProfiles.containsKey(newFriend.ownerId) && !ownerId.equalsIgnoreCase(newFriend.ownerId))	{
 				friendProfiles.put(newFriend.ownerId, newFriend);
-				addConversation(newFriend.ownerUsername, newFriend.ToDeliverMessageTopic);
+				addConversation(newFriend.getOwnerUsername(), newFriend.ToDeliverMessageTopic);
 				return true;
 			}
 			return false;
@@ -131,7 +149,7 @@ public class SocialProfile extends BaseEntity {
 	
 	public String getFriendsUsername(String friendId)	{
 		if (!friendProfiles.containsKey(friendId))
-			return friendProfiles.get(friendId).ownerUsername;
+			return friendProfiles.get(friendId).getOwnerUsername();
 		else 
 			return null;
 	}
@@ -168,7 +186,7 @@ public class SocialProfile extends BaseEntity {
 		HashMap<String, String> contacts = new HashMap<String, String>();
 		for (String friendId:friendProfiles.keySet())	{
 			SocialProfile friendProfile = friendProfiles.get(friendId);
-			contacts.put(friendProfile.ownerUsername, friendId);
+			contacts.put(friendProfile.getOwnerUsername(), friendId);
 		}		
 		return contacts;
 	}
@@ -181,17 +199,17 @@ public class SocialProfile extends BaseEntity {
 			return null;
 	}
 	
-	public Notification createNotification(NotificationType type)	{
+	public Notification createNotification(NotificationType type) throws UnsupportedNotificationTypeException	{
 			switch (type)	{
 				case NEWFEEDS: 
 					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
-							"Newfeed from "+ownerUsername, type);
+							"Newfeed from "+getOwnerUsername(), type);
 				case PROFILEUPDATE:
 					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
-							"Profile update from "+ownerUsername, type);
+							"Profile update from "+getOwnerUsername(), type);
 				case IPUPDATE:
 					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
-							"Ip update from "+ownerUsername, type);
+							"Ip update from "+getOwnerUsername(), type);
 				case NEWCOMMENT:
 					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"New comment in "+ownerId, type);
@@ -202,12 +220,12 @@ public class SocialProfile extends BaseEntity {
 					return new Notification(ownerId, DateTimeUtil.getCurrentTimeStamp(),
 							"Session Key change in "+ownerId, type);
 				default:
-					return null;
+					throw new UnsupportedNotificationTypeException("Not suppot type" + type);
 			}
 	}
 	
 	public Message createMessage(String content)	{
-		Message msg = new Message(ownerId, ownerUsername, DateTimeUtil.getCurrentTimeStamp(), content);
+		Message msg = new Message(ownerId, getOwnerUsername(), DateTimeUtil.getCurrentTimeStamp(), content);
 		msg.ownerDisplayName = ownerDisplayName;
 		return msg;
 	}
@@ -215,18 +233,20 @@ public class SocialProfile extends BaseEntity {
 	public Status createStatus(String content)	{
 		Status status = new Status(ownerId, DateTimeUtil.getCurrentTimeStamp(), content);
 		status.ownerDisplayName = ownerDisplayName;
-		status.ownerUsername = ownerUsername;
+		status.setOwnerUsername(ownerUsername);
 		return status;
 	}
 	
-	public EncryptedEntity createEncryptedEntity(BaseEntity entity, byte[] key, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, IOException	{
-		return new EncryptedEntity(ownerId, DateTimeUtil.getCurrentTimeStamp(), entity, key, algorithm);
+	public EncryptedEntity createEncryptedEntity(BaseEntity entity, String keyId, byte[] key, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, IOException	{
+		EncryptedEntity encrytedEntity = new EncryptedEntity(ownerId, DateTimeUtil.getCurrentTimeStamp(), entity, keyId, key, algorithm);
+		encrytedEntity.setOwnerUsername(ownerUsername);
+		return encrytedEntity;
 	}
 	
 	public Comment createComment(String content, String toObjectId)	{
 		Comment comment = new Comment(ownerId, DateTimeUtil.getCurrentTimeStamp(), content, toObjectId);
 		comment.ownerDisplayName = ownerDisplayName;
-		comment.ownerUsername = ownerUsername;
+		comment.setOwnerUsername(ownerUsername);
 		return comment;
 	}
 	
@@ -258,12 +278,12 @@ public class SocialProfile extends BaseEntity {
 	
 	public static SocialProfile getSocialProfile(String username, PastryIdFactory idf)	{
 		SocialProfile dsp = new SocialProfile(idf.buildId(username).toStringFull(), DateTimeUtil.getCurrentTimeStamp());
-		dsp.ownerUsername = username;
+		dsp.setOwnerUsername(username);
 		dsp.ownerDisplayName = "Daniel";
 		dsp.setToDeliverMessageTopic(idf.buildId(username+"_MESSAGE").toStringFull());
 		dsp.setToFollowNotificationTopic(idf.buildId(username+"_GETNOTIFY").toStringFull());
 		dsp.setToFollowRealIpTopic(idf.buildId(username+"_GETIP").toStringFull());
-		dsp.setWallObjectId(idf.buildId(dsp.ownerUsername+"_WALL").toStringFull());
+		dsp.setWallObjectId(idf.buildId(dsp.getOwnerUsername()+"_WALL").toStringFull());
 		return dsp;
 	}
 

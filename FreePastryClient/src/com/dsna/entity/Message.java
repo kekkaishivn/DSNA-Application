@@ -10,7 +10,7 @@ public class Message extends BaseEntity {
 	Message(String ownerId, String ownerName, long timeStamp, String content)	{
 		super(ownerId, timeStamp);
 		this.content = content;
-		this.ownerUsername = ownerName;
+		this.setOwnerUsername(ownerName);
 	}
 	
 	public String getContent()	{
@@ -26,7 +26,7 @@ public class Message extends BaseEntity {
 	}
 	
 	public String toString()	{
-		return "Message from ["+ownerUsername+"] :"+content;
+		return "Message from ["+getOwnerUsername()+"] :"+content;
 	}
 
 	@Override

@@ -62,7 +62,7 @@ public class TestASN1 {
 
 		    // Encryption/Decryption
 		    byte[][] ciphertext = cd07.encaps(ASN1Util.decodeCD07PublicParameters(encodedPublicKey), cd07Ids);
-		    byte[] key = cd07.decaps(cd07DecryptionKey, ciphertext[1]);			    
+		    byte[] key = cd07.decaps(cd07DecryptionKey, ciphertext[1]);			
 		    
 		    AsymmetricCipherKeyPair ps06KeyPairDecoded = new AsymmetricCipherKeyPair(publicKeys[0], masterSecretKeys[0]);
 		    // Extract -> Secret Key for Identity "01001101"

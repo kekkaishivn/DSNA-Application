@@ -60,35 +60,26 @@ public class IBBECD07 {
     return extract.generateKey();
 	}
 
-	public byte[][] encaps(CipherParameters publicKey, Element[] ids) {
-    try {
-        KeyEncapsulationMechanism kem = new CD07KEMEngine();
-        kem.init(true, new CD07EncryptionParameters((CD07PublicKeyParameters) publicKey, ids));
+	public byte[][] encaps(CipherParameters publicKey, Element[] ids) throws InvalidCipherTextException {
 
-        byte[] ciphertext = kem.process();
-        System.out.println(kem.getKeyBlockSize());
+      KeyEncapsulationMechanism kem = new CD07KEMEngine();
+      kem.init(true, new CD07EncryptionParameters((CD07PublicKeyParameters) publicKey, ids));
 
-        byte[] key = Arrays.copyOfRange(ciphertext, 0, kem.getKeyBlockSize());
-        byte[] ct = Arrays.copyOfRange(ciphertext, kem.getKeyBlockSize(), ciphertext.length);
+      byte[] ciphertext = kem.process();
+      System.out.println(kem.getKeyBlockSize());
 
-        return new byte[][]{key, ct};
-    } catch (InvalidCipherTextException e) {
-        e.printStackTrace();
-    }
-    		return null;
+      byte[] key = Arrays.copyOfRange(ciphertext, 0, kem.getKeyBlockSize());
+      byte[] ct = Arrays.copyOfRange(ciphertext, kem.getKeyBlockSize(), ciphertext.length);
+
+      return new byte[][]{key, ct};
 	}
 
-	public byte[] decaps(CipherParameters decryptionKey, byte[] cipherText) {
-    try {
-        KeyEncapsulationMechanism kem = new CD07KEMEngine();
-        kem.init(false, decryptionKey);
-        byte[] key = kem.processBlock(cipherText, 0, cipherText.length);
-        return key;
-    } catch (InvalidCipherTextException e) {
-        e.printStackTrace();
-    }
+	public byte[] decaps(CipherParameters decryptionKey, byte[] cipherText) throws InvalidCipherTextException {
 
-    return null;
+      KeyEncapsulationMechanism kem = new CD07KEMEngine();
+      kem.init(false, decryptionKey);
+      byte[] key = kem.processBlock(cipherText, 0, cipherText.length);
+      return key;
 	}
 
 

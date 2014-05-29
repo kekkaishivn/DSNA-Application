@@ -1,6 +1,7 @@
 package com.dsna.entity;
 
 import java.util.HashMap;
+import java.util.Set;
 
 public class Notification extends BaseEntity {
 
@@ -10,7 +11,7 @@ public class Notification extends BaseEntity {
 	private String description;
 	private HashMap<String,String> fileIdsMap;
 
-	Notification(String ownerId, long timeStamp, String description, NotificationType type)	{
+	public Notification(String ownerId, long timeStamp, String description, NotificationType type)	{
 		super(ownerId, timeStamp);
 		this.description = description;
 		this.type = type;
@@ -38,7 +39,7 @@ public class Notification extends BaseEntity {
 	}*/
 	
 	public String toString()	{
-		return "Notification from ["+ownerId+"] :"+description;
+		return "Notification from ["+ownerId+"] :"+description+"-Map:"+fileIdsMap;
 	}
 	
 	@Override
@@ -50,12 +51,16 @@ public class Notification extends BaseEntity {
 					 else return true;
 	}
 	
-	public void setFileId(String location, String id)	{
+	public void putFileId(String location, String id)	{
 		fileIdsMap.put(location, id);
 	}
 	
-	public String getGetId(String location)	{
+	public String getFileId(String location)	{
 		return fileIdsMap.get(location);
+	}
+	
+	public Set<String> getLocationSet()	{
+		return fileIdsMap.keySet();
 	}
 	
 	@Override

@@ -1,12 +1,12 @@
-package com.dsna.dht.scribe;
+package com.dsna.p2p.scribe;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-import com.dsna.dht.scribe.message.ReplicateContentsMessage;
-import com.dsna.dht.scribe.message.ReplicatePullReqMessage;
-import com.dsna.dht.scribe.message.ReplicatePushACKMessage;
-import com.dsna.dht.scribe.message.ReplicatePushReqMessage;
+import com.dsna.p2p.scribe.message.ReplicateContentsMessage;
+import com.dsna.p2p.scribe.message.ReplicatePullReqMessage;
+import com.dsna.p2p.scribe.message.ReplicatePushACKMessage;
+import com.dsna.p2p.scribe.message.ReplicatePushReqMessage;
 
 import rice.*;
 import rice.environment.Environment;

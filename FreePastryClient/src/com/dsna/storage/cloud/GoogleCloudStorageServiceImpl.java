@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import rice.Continuation;
+
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
@@ -174,15 +176,28 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 		return fileId;
 	}
 
-	@Override
-	public InputStream getFile(String fileId) throws UserRecoverableAuthIOException, IOException {
-		// TODO Auto-generated method stub
+	private InputStream getFile(String fileId) throws UserRecoverableAuthIOException, IOException {
 		File file = service.files().get(fileId).execute();
 		String downloadURL = file.getDownloadUrl();
     HttpResponse resp =
         service.getRequestFactory().buildGetRequest(new GenericUrl(downloadURL))
             .execute();
     return resp.getContent();
+	}
+
+	@Override
+	public void getFile(final String fileId, final Continuation<InputStream, Exception> action) {
+		Thread thread = new Thread(){
+	    public void run(){
+	      try {
+					InputStream in = getFile(fileId);
+					action.receiveResult(in);
+				} catch (Exception e) {
+					action.receiveException(e);
+				}
+	    }
+	  };
+	  thread.start();
 	}
 
 }
