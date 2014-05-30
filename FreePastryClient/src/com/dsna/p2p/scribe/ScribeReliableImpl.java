@@ -7,6 +7,7 @@ import com.dsna.p2p.scribe.message.ReplicateContentsMessage;
 import com.dsna.p2p.scribe.message.ReplicatePullReqMessage;
 import com.dsna.p2p.scribe.message.ReplicatePushACKMessage;
 import com.dsna.p2p.scribe.message.ReplicatePushReqMessage;
+import com.dsna.util.DateTimeUtil;
 
 import rice.*;
 import rice.environment.Environment;
@@ -1114,12 +1115,14 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
   		return theMissingContents;
   	}
   	
-  	int NumOfRetrieve = (int)(latestSeq-latestLocalSeq);
+  	//int NumOfRetrieve = (int)(latestSeq-latestLocalSeq);
   	if (latestLocalSeq < latestSeq)	{
   		//System.out.println("Num of retrieve: "+NumOfRetrieve);
-  		int sublistStartIndex = Math.min(lastElementIndex, Math.max(lastElementIndex-NumOfRetrieve+1, 0));
-  		ArrayList<ScribeContent> missingContents = new ArrayList<ScribeContent>(cache.subList(sublistStartIndex, lastElementIndex+1));
-  		//System.out.println("missing contents: "+missingContents);
+  		ArrayList<ScribeContent> missingContents = new ArrayList<ScribeContent>();
+  		for (ScribeContent cachingContent : cache)
+  			if (((DSNAScribeContent) cachingContent).seq > latestLocalSeq)	
+  				missingContents.add(cachingContent);
+  				
   		theMissingContents = new DSNAScribeCollectionContent(localHandle, missingContents);
   		theMissingContents.version = latestSeq;
   		return theMissingContents;
@@ -2052,7 +2055,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
       		(new Thread(cachingWorker)).start();
       	}
       	else {
-      		theContent.seq = getLatestSeqInCache(theTopic) + 1;
+      		theContent.seq = DateTimeUtil.getCurrentTimeStamp();
       		cachePublishMessage(theTopic, theContent);
       		asynchronousReplicateCache(theTopic);
       	}
@@ -2255,8 +2258,7 @@ public class ScribeReliableImpl implements Scribe, MaintainableScribe, Applicati
   				theCache = publishedCaches.get(topic);
   			}
   		}
-  		long latestSeq = getLatestSeqInCache(topic);
-  		((DSNAScribeContent)content).seq = latestSeq + 1;
+  		((DSNAScribeContent)content).seq = DateTimeUtil.getCurrentTimeStamp();
 	  	System.out.println("Caching some content "+content+" In the topic + "+topic);
   		theCache.add(content);
   	}

@@ -21,12 +21,6 @@ public class DSNAScribeContent implements ScribeContent {
   long seq;
   
   /**
-   * The token, along with the seq to refer to previous received message
-   * In case all the root node is dead, mean the message lost, a new random token will be generated
-   */  
-   String randomToken;
-  
-  /**
    * The content.
    */
   BaseEntity message;
@@ -38,10 +32,9 @@ public class DSNAScribeContent implements ScribeContent {
    * @param from Who sent the message.
    * @param seq the sequence number of this content.
    */
-  public DSNAScribeContent(NodeHandle from, long seq, String randomToken, BaseEntity message) {
+  public DSNAScribeContent(NodeHandle from, long seq, BaseEntity message) {
     this.from = from;
     this.seq = seq;
-    this.randomToken = randomToken;
     this.message = message;
 //    System.out.println(this+".ctor");
   }

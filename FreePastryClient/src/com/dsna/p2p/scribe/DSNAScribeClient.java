@@ -125,7 +125,7 @@ public class DSNAScribeClient implements ScribeReliableMultiClient, Application 
    */
   public void publish(String topicId, BaseEntity msg, boolean isCaching) {
     System.out.println("Node "+endpoint.getLocalNodeHandle()+" broadcasting "+seqNum + " in topic: " + topicId );
-    DSNAScribeContent myMessage = new DSNAScribeContent(endpoint.getLocalNodeHandle(), 0, "", msg);
+    DSNAScribeContent myMessage = new DSNAScribeContent(endpoint.getLocalNodeHandle(), 0, msg);
     Topic theTopic = getTopicFromId(topicId);
     theTopic.setCaching(isCaching);
     myScribe.publish(theTopic, myMessage); 
