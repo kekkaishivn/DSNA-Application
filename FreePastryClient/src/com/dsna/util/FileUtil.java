@@ -46,7 +46,7 @@ public class FileUtil {
     return result;
 	}
 	
-	public static String readString(FileInputStream streamIn) throws IOException{
+	public static String readString(InputStream streamIn) throws IOException{
 		BufferedReader reader = new BufferedReader(new InputStreamReader(streamIn));
     String line = null;
     StringBuilder stringBuilder = new StringBuilder();

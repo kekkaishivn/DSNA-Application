@@ -2,22 +2,22 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/xmlpull_1_1_3_4a.jar"/>
-	<classpathentry kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/xpp3-1.1.3.4d_b2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/jpbc-api-2.0.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/jpbc-plaf-2.0.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/commons-logging-1.1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-api-client-1.18.0-rc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-api-client-android-1.18.0-rc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-api-client-gson-1.18.0-rc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-api-services-drive-v2-rev121-1.18.0-rc.jar" sourcepath="/Users/mac/Downloads/drive/google-api-services-drive-v2-rev121-1.18.0-rc-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-http-client-1.18.0-rc.jar" sourcepath="/Users/mac/Downloads/drive/libs-sources/google-http-client-1.18.0-rc-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-http-client-android-1.18.0-rc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-http-client-gson-1.18.0-rc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/google-oauth-client-1.18.0-rc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/gson-2.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/bcprov-jdk16-1.46.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/jpbc-crypto-2.0.0.jar"/>
-	<classpathentry kind="lib" path="/Users/mac/git/com.dsna.git.source/FreePastryClient/lib/FreePastry2.1_v1.4.jar" sourcepath="/FreePastryRebuild/src"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/bcprov-jdk16-1.46.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/FreePastry2.1_v1.4.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-api-client-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-api-client-android-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-api-client-gson-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-api-services-drive-v2-rev121-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-http-client-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-http-client-android-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-http-client-gson-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/google-oauth-client-1.18.0-rc.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/gson-2.1.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/jpbc-api-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/jpbc-crypto-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/jpbc-plaf-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/xmlpull_1_1_3_4a.jar"/>
+	<classpathentry kind="lib" path="/home/datletien/git/DSNA-Crypto-added/FreePastryClient/lib/xpp3-1.1.3.4d_b2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

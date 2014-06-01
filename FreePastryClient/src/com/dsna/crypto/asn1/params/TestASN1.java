@@ -33,7 +33,7 @@ public class TestASN1 {
 	
 			IBBECD07 cd07 = new IBBECD07();
 	    // Setup
-	    AsymmetricCipherKeyPair cd07KeyPair = cd07.setup(300);
+	    AsymmetricCipherKeyPair cd07KeyPair = cd07.setup(500);
 	    
 	    String[] idsName = {"letiendat3012@gmail.com", "halo@yahoo.com", "tdle@vnu.edu.vn", "haivl@yahoo.com", "chanchet@haha.com", "Compute@hichic.com"};
 	    String encodedPublicKey = ASN1Util.encode(cd07KeyPair.getPublic());
