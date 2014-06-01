@@ -62,7 +62,7 @@ public class DSNAScribeClient implements ScribeReliableMultiClient, Application 
   public DSNAScribeClient(Node node, ScribeEventListener uiUpdater) {
     // you should recognize this from lesson 3
     this.endpoint = node.buildEndpoint(this, "myinstance");
- 
+    //node.getEnvironment().getTimeSource().
     // construct Scribe
     myScribe = new ScribeReliableImpl(node,"DSNAScribeInstance");
     
