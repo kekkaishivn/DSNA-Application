@@ -6,12 +6,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -21,6 +29,7 @@ import java.util.Vector;
 
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
@@ -85,6 +94,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class ClientFrame extends JFrame implements SocialEventListener {
+	
+	public static final String publicKeyURL = "https://130.237.20.200:8080/DSNA_privatekeygenerator/SystemPublic.txt";
+	public static final String secretKeyURL = "https://130.237.20.200:8080/DSNA_privatekeygenerator/KeyExtract.jsp";
+	public static final String idParams = "clientid";	
+	
 	private JTextArea textArea_Message;
 	private JTextField textField_BindPort;
 	private JTextField textField_BootPort;
@@ -120,6 +134,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	private SocialProfile currentLookupFriend = null;
 	private boolean isSynchronizingProfile;
 	private HashMap<String,String> localFriendsContacts;
+	CipherParameters[] publicKeys;
 	
 	public ClientFrame() {
 		addWindowListener(new WindowAdapter() {
@@ -825,13 +840,26 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		
 	}
 	
+	private synchronized CipherParameters[] getPublicKeys() throws IOException, InvalidCertificateException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException	{
+		if (publicKeys==null)	{
+			KeyStore localTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			System.out.println(KeyStore.getDefaultType());
+			InputStream in = new FileInputStream("dsnatrustkeystore.jks");
+			localTrustStore.load(in, "kthdsna".toCharArray());  
+      HttpsURLConnection urlConnection = NetworkUtil.establishHttpsConnection(publicKeyURL, localTrustStore);
+    	String encodedSysPublicKey = FileUtil.readString(urlConnection.getInputStream());
+    	urlConnection.disconnect();
+    	publicKeys = ASN1Util.extractPublicKey(ASN1Util.decodeIBESysPublicParams(encodedSysPublicKey));	
+		}
+		return publicKeys;
+	}
+	
 	private KeyInfo currentSessionKey;
 	private void distributeSessionKey() {
 		// TODO Auto-generated method stub
 		try {
-			String encodedSysPublicKey = FileUtil.readString(new FileInputStream("SystemPublic.txt"));
-			System.out.println(encodedSysPublicKey);
-			CipherParameters[] publicKeys = ASN1Util.extractPublicKey(ASN1Util.decodeIBESysPublicParams(encodedSysPublicKey));
+			
+			CipherParameters[] publicKeys = getPublicKeys();
 			serviceHandler.changeAndDistributeSessionKey(IdBasedSecureSocialService.AESAlgorithm ,publicKeys[1], new Continuation<KeyInfo, Exception>() {
         public void receiveResult(KeyInfo result) {          
       		currentSessionKey = result;
@@ -843,7 +871,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
         }
 			
 			});
-		} catch (IOException | InvalidCertificateException e) {
+		} catch (IOException | InvalidCertificateException | KeyManagementException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -1,9 +1,21 @@
 package com.dsna.util;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+
+import com.dsna.net.ssl.DSNATrustManager;
 
 public class NetworkUtil {
 
@@ -24,6 +36,19 @@ public class NetworkUtil {
             }
         }
 		return myIp;
+	}
+	
+	public static HttpsURLConnection establishHttpsConnection(String url, KeyStore localTrustStore) throws NoSuchAlgorithmException, KeyManagementException, IOException	{
+		DSNATrustManager myTrustManager = new DSNATrustManager(localTrustStore);
+		TrustManager[] tms = new TrustManager[] { myTrustManager };
+		SSLContext sslCtx = SSLContext.getInstance("TLS");
+		sslCtx.init(null, tms, null);
+		
+		URL urlResource = new URL(url);
+		HttpsURLConnection urlConnection = (HttpsURLConnection) urlResource 
+        .openConnection();
+		urlConnection.setSSLSocketFactory(sslCtx.getSocketFactory());
+		return urlConnection;
 	}
 
 }
