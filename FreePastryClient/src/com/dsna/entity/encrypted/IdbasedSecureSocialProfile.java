@@ -31,7 +31,7 @@ public class IdbasedSecureSocialProfile extends SocialProfile {
 			return notification;
 		default:
 			notification = super.createNotification(type);
-			notification.setPreferEncrypted(true);
+			notification.setPreferEncrypted(getPreferEncrypted());
 			return notification;
 		}		
 	}
@@ -39,19 +39,19 @@ public class IdbasedSecureSocialProfile extends SocialProfile {
 	@Override
 	public Message createMessage(String content, boolean isPrivate)	{
 		Message msg = super.createMessage(content, isPrivate);
-		msg.setPreferEncrypted(true);
+		msg.setPreferEncrypted(getPreferEncrypted());
 		return msg;
 	}
 	
 	@Override
 	public Message createMessage(String content)	{
-		return createMessage(content, true);
+		return createMessage(content, getPreferEncrypted());
 	}
 	
 	@Override
 	public Status createStatus(String content)	{
 		Status status = super.createStatus(content);
-		status.setPreferEncrypted(true);
+		status.setPreferEncrypted(getPreferEncrypted());
 		return status;
 	}
 

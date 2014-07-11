@@ -88,8 +88,8 @@ public class IdBasedSecureSocialServiceImpl extends SocialServiceImpl implements
 		    final KeyInfo keyInfo = new KeyInfo(userProfile.getOwnerUsername(), DateTimeUtil.getCurrentTimeStamp(), keyId, ciphertext[0], symmetricAlgorithm);
 			
 		    // Encryption/Decryption
-		    if (cloudHandlers.isEmpty())	{
-		    	storageHandler.insert(new DSNAPastContent(headerId, keyHeader, GCPast.INFINITY_EXPIRATION), new Continuation<Boolean[], Exception>() {
+		    if (cloudStorageHandlers.isEmpty())	{
+		    	dhtStorageHandler.insert(new DSNAPastContent(headerId, keyHeader, GCPast.INFINITY_EXPIRATION), new Continuation<Boolean[], Exception>() {
 		        // the result is an Array of Booleans for each insert
 		        public void receiveResult(Boolean[] results) {          
 		      		Notification notification;
@@ -111,9 +111,9 @@ public class IdBasedSecureSocialServiceImpl extends SocialServiceImpl implements
 		      });
 		    	return;
 		    }
-	    
+
 		    InputStream header = createInputStreamFromObject(keyHeader);    
-		    String id = cloudHandlers.get(Location.GOOGLE_CLOUD).uploadContentToFriendOnlyFolder(new String(ciphertext[1])+".txt", "text/plain", "DSNA Session Key header", header);
+		    String id = cloudStorageHandlers.get(Location.GOOGLE_CLOUD).uploadContentToFriendOnlyFolder(new String(ciphertext[1])+".txt", "text/plain", "DSNA Session Key header", header);
 				Notification notification;
 				notification = userProfile.createNotification(NotificationType.SESSION_KEY_CHANGE);
 				notification.setDescription("DSNA Session Key change");
@@ -156,6 +156,65 @@ public class IdBasedSecureSocialServiceImpl extends SocialServiceImpl implements
 	}
 	
 	@Override
+	protected void postStatus(final Id statusId, final String status) throws IOException {
+
+		Status theStatus = userProfile.createStatus(status);
+		
+		if (!theStatus.getPreferEncrypted())	{
+			super.postStatus(statusId, status);
+			return;
+		}
+		
+		BaseEntity encryptedEntity = null;
+		
+		try {
+			encryptedEntity = userProfile.createEncryptedEntity(theStatus, keyId, cipher);
+		} catch (InvalidKeyException | NoSuchAlgorithmException
+				| NoSuchPaddingException | IllegalBlockSizeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		if (cloudStorageHandlers.keySet().size()>0)	{
+			Notification notification;
+			try {
+				notification = userProfile.createNotification(NotificationType.NEWFEEDS);
+	  		notification.setDescription(statusId.toStringFull());
+				for (String location : cloudStorageHandlers.keySet())	{
+					CloudStorageService cloudHandler = cloudStorageHandlers.get(location);
+					InputStream content = createInputStreamFromObject(encryptedEntity);
+					String id = cloudHandler.uploadContentToFriendOnlyFolder(statusId.toStringFull()+".txt", "text/plain", "DSNA status", content);
+		  		notification.putFileId(location, id);
+				}
+				broadcast(userProfile.getToFollowNotificationTopic(), notification, true);
+			} catch (UnsupportedNotificationTypeException e) {
+				eventListener.receiveInsertException(e);
+			}
+			return;
+		}		
+		
+		dhtStorageHandler.insert(new DSNAPastContent(statusId, encryptedEntity, GCPast.INFINITY_EXPIRATION), new Continuation<Boolean[], Exception>() {
+      // the result is an Array of Booleans for each insert
+      public void receiveResult(Boolean[] results) {          
+    		Notification notification;
+				try {
+					notification = userProfile.createNotification(NotificationType.NEWFEEDS);
+	    		notification.setDescription(statusId.toStringFull());
+	    		notification.putFileId(Location.DHT, statusId.toStringFull());
+	    		broadcast(userProfile.getToFollowNotificationTopic(), notification, true);					
+				} catch (UnsupportedNotificationTypeException e) {
+					eventListener.receiveInsertException(e);
+				}
+      }
+
+      public void receiveException(Exception result) {
+      	eventListener.receiveInsertException(result);
+      }
+    });
+		
+	}	
+	
+	@Override
 	public void broadcast(String topicId, BaseEntity msg, boolean isCaching)	{
 		
 		if (!msg.getPreferEncrypted())	{
@@ -170,6 +229,11 @@ public class IdBasedSecureSocialServiceImpl extends SocialServiceImpl implements
 				| NoSuchPaddingException | IllegalBlockSizeException | IOException e) {
 			eventListener.receiveBroadcastException(e);
 		}
+	}
+
+	@Override
+	public void setPreferEncrypted(boolean preferEncrypted) {
+		userProfile.setPreferEncrypted(preferEncrypted);
 	}
 
 }

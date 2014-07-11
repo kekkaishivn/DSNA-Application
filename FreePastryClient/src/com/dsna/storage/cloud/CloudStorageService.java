@@ -15,8 +15,10 @@ public interface CloudStorageService {
 	public String uploadContentToFriendOnlyFolder(String title, String type, String description, InputStream content) throws UserRecoverableAuthIOException, IOException;
 	public String uploadContentToPublicFolder(String title, String type, String description, InputStream content) throws UserRecoverableAuthIOException, IOException;
 	public List<String> addPermission(String fileId, List<String> userIds, String type, String role) throws UserRecoverableAuthIOException, IOException;
+	public List<String> addPermissionToFriendFolder(List<String> userIds, String type, String role) throws UserRecoverableAuthIOException, IOException;
 	public void removePermission(String fileId, String permissionId) throws UserRecoverableAuthIOException, IOException;
 	public void removePermission(String fileId, String userId, String permission) throws UserRecoverableAuthIOException, IOException;
+	public void removePermissionFromFriendFolder(String permissionId) throws UserRecoverableAuthIOException, IOException;
 	public String createFolder(String title, String description, String parentId)	throws UserRecoverableAuthIOException, IOException;
 	public String createFile(String title, String type, String description, String parentId, InputStream content) throws UserRecoverableAuthIOException, IOException;
 	public void getFile(String fileId, Continuation<InputStream, Exception> action);

@@ -49,12 +49,12 @@ public class EncryptedEntity extends BaseEntity {
 		return (BaseEntity) sealedObj.getObject(cipher);
 	}
 	
-	public void setFileId(String location, String id)	{
-		keyEncapsulationFileIdsMap.put(location, id);
+	public void setKeyHeaderFileId(String cloud, String id)	{
+		keyEncapsulationFileIdsMap.put(cloud, id);
 	}
 	
-	public String getFileId(String location)	{
-		return keyEncapsulationFileIdsMap.get(location);
+	public String getKeyHeaderFileId(String cloud)	{
+		return keyEncapsulationFileIdsMap.get(cloud);
 	}
 	
 	public Set<String> getLocationSet()	{

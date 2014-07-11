@@ -53,6 +53,10 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
     return array;
 	}
 	
+	/*
+	 * This function is to compute the polynomial coefficient
+	 * (theta+id1)*(theta*id2)*...*(theta+idn)
+	 */
 	private static ArrayList<Element> computeFi(Element k, Element[] ids)	{
 				
 		Element one = k.getField().newOneElement().getImmutable();
@@ -98,8 +102,6 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
  	 	  	Element tmp = publicKey.getMAt(i-1).powZn(fi.get(fi.size()-1-i)).getImmutable();
  	 	  	C2 = C2.mul(tmp).getImmutable();
  	 	  }
- 	 	  
- 	 	  System.out.println("Encap: " + K);
  	 	  
  	 	  // Direct formula with theta to test purpose
 /* 	 	  Element tmp = k.mulZn(theta.add(ids[0])).getImmutable();
@@ -155,8 +157,7 @@ public class CD07KEMEngine extends PairingKeyEncapsulationMechanism {
 	  	Element tmp4 = pairing.pairing(C1, hp1).getImmutable();
 	  	Element tmp5 = pairing.pairing(skid, C2).getImmutable();
 	  	Element K = tmp4.mul(tmp5).powZn(inv_tmp1).getImmutable();
-	  	System.out.println("Decap K: " + K);
-	  	
+	
 		 	return K.toBytes();
 		}
 	}	

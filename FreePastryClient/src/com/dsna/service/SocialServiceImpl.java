@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
@@ -30,6 +31,7 @@ import com.dsna.p2p.scribe.ScribeEventListener;
 import com.dsna.storage.cloud.CloudStorageService;
 import com.dsna.util.DateTimeUtil;
 import com.dsna.util.FileUtil;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 
 import rice.Continuation;
 import rice.p2p.commonapi.Id;
@@ -46,8 +48,8 @@ import rice.pastry.commonapi.PastryIdFactory;
 public class SocialServiceImpl implements SocialService, ScribeEventListener, PastEventListener {
 
 	protected PastryNode pastryNode;
-	protected DSNAPastClient storageHandler;
-	protected HashMap<String, CloudStorageService> cloudHandlers;
+	protected DSNAPastClient dhtStorageHandler;
+	protected HashMap<String, CloudStorageService> cloudStorageHandlers;
 	protected DSNAScribeClient broadcaster;
 	protected SocialEventListener eventListener;
 	protected PastryIdFactory idf;
@@ -57,11 +59,11 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	protected SocialServiceImpl(PastryNode pastryNode, SocialEventListener eventListener) throws IOException, InterruptedException, JoinFailedException	{
 		this.pastryNode = pastryNode;
 		this.eventListener = eventListener;
-		this.cloudHandlers = new HashMap<String, CloudStorageService>();
+		this.cloudStorageHandlers = new HashMap<String, CloudStorageService>();
 
 		// Create storage service from pastry node
 		DSNAPastFactory pastFactory = new DSNAPastFactory(pastryNode.getEnvironment());
-		storageHandler = pastFactory.newClient(pastryNode, this);
+		dhtStorageHandler = pastFactory.newClient(pastryNode, this);
 		
 		// Create publish/subscribe service from pastry node
 		DSNAScribeFactory scribeFactory = new DSNAScribeFactory(pastryNode.getEnvironment());
@@ -103,14 +105,18 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	protected void postStatus(final Id statusId, final String status) throws IOException {
 
 		Status theStatus = userProfile.createStatus(status);
+		BaseEntity entity = theStatus;
+		if (theStatus.getPreferEncrypted())	{
+			//content = userProfile.c
+		}
 		
-		if (cloudHandlers.keySet().size()>0)	{
+		if (cloudStorageHandlers.keySet().size()>0)	{
 			Notification notification;
 			try {
 				notification = userProfile.createNotification(NotificationType.NEWFEEDS);
 	  		notification.setDescription(statusId.toStringFull());
-				for (String location : cloudHandlers.keySet())	{
-					CloudStorageService cloudHandler = cloudHandlers.get(location);
+				for (String location : cloudStorageHandlers.keySet())	{
+					CloudStorageService cloudHandler = cloudStorageHandlers.get(location);
 					InputStream content = createInputStreamFromObject(theStatus);
 					String id = cloudHandler.uploadContentToFriendOnlyFolder(statusId.toStringFull()+".txt", "text/plain", "DSNA status", content);
 		  		notification.putFileId(location, id);
@@ -122,25 +128,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 			return;
 		}		
 		
-		storageHandler.insert(new DSNAPastContent(statusId, theStatus, GCPast.INFINITY_EXPIRATION), new Continuation<Boolean[], Exception>() {
-      // the result is an Array of Booleans for each insert
-      public void receiveResult(Boolean[] results) {          
-    		Notification notification;
-				try {
-					notification = userProfile.createNotification(NotificationType.NEWFEEDS);
-	    		notification.setDescription(statusId.toStringFull());
-	    		notification.putFileId(Location.DHT, statusId.toStringFull());
-	    		broadcast(userProfile.getToFollowNotificationTopic(), notification, true);					
-				} catch (UnsupportedNotificationTypeException e) {
-					eventListener.receiveInsertException(e);
-				}
-      }
-
-      public void receiveException(Exception result) {
-      	eventListener.receiveInsertException(result);
-      }
-    });
-		
+		throw new IOException("Do not have any cloud handler");
 	}
 	
 	public InputStream createInputStreamFromObject(Serializable obj) throws IOException	{
@@ -191,13 +179,13 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 
 	@Override
-	public void lookupById(final String id, Continuation<PastContent, Exception> resultHandler) {
-    storageHandler.lookup(idf.buildIdFromToString(id), resultHandler);
+	public void lookupDHTById(final String id, Continuation<PastContent, Exception> resultHandler) {
+    dhtStorageHandler.lookup(idf.buildIdFromToString(id), resultHandler);
 	}
 	
 	@Override
-	public void lookupByName(String name, Continuation<PastContent, Exception> resultHandler) {
-		storageHandler.lookup(idf.buildId(name), resultHandler);
+	public void lookupDHTByName(String name, Continuation<PastContent, Exception> resultHandler) {
+		dhtStorageHandler.lookup(idf.buildId(name), resultHandler);
 	}
 	
 	public SocialProfile defaultSocialProfile()	{
@@ -244,7 +232,7 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 
 	@Override
 	public void pushProfileToDHT() {
-		storageHandler.insert(new DSNAPastContent(idf.buildIdFromToString(userProfile.getUserId()), userProfile, GCPast.INFINITY_EXPIRATION));		
+		dhtStorageHandler.insert(new DSNAPastContent(idf.buildIdFromToString(userProfile.getUserId()), userProfile, GCPast.INFINITY_EXPIRATION));		
 	}
 
 	@Override
@@ -253,6 +241,14 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 		if (userProfile.addFriend(friend))	{
 			broadcaster.subscribe(friend.getToFollowRealIpTopic(), Topic.SEQ_IGNORE);
 			broadcaster.subscribe(friend.getToFollowNotificationTopic(), Topic.SEQ_IGNORE);
+			for (String location : cloudStorageHandlers.keySet())
+				try {
+					cloudStorageHandlers.get(location).addPermissionToFriendFolder(Arrays.asList(friend.getOwnerUsername()), "user", "reader");
+				} catch (UserRecoverableAuthIOException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			return true;
 		}
 		return false;
@@ -384,16 +380,18 @@ public class SocialServiceImpl implements SocialService, ScribeEventListener, Pa
 	}
 
 	@Override
-	public void addCloudHandler(String cloudLocation, CloudStorageService cloudHandler) {
-		cloudHandlers.put(cloudLocation, cloudHandler);
+	public void addCloudHandler(String cloudLocation, CloudStorageService cloudHandler) throws UserRecoverableAuthIOException, IOException {
+		cloudHandler.initializeDSNAFolders();
+		cloudStorageHandlers.put(cloudLocation, cloudHandler);
 	}
 
 	@Override
-	public void lookupById(String cloudLocation, String id,
+	public void lookupCloudsById(String cloudLocation, String id,
 			Continuation<InputStream, Exception> action) {
-		if (cloudHandlers.containsKey(cloudLocation))
-			cloudHandlers.get(cloudLocation).getFile(id, action);		
-		action.receiveException(new UnsupportedCloudException("Not supported yet - " + cloudLocation));
+		if (cloudStorageHandlers.containsKey(cloudLocation))
+			cloudStorageHandlers.get(cloudLocation).getFile(id, action);		
+		else
+			action.receiveException(new UnsupportedCloudException("Not supported yet - " + cloudLocation));
 	}
 
 	@Override

@@ -22,9 +22,9 @@ public interface SocialService {
 	
 	public void postStatus(String status) throws UserRecoverableAuthIOException, IOException;
 	public void postStatus(String id, String status) throws UserRecoverableAuthIOException, IOException;
-	public void lookupById(String id, Continuation<PastContent, Exception> action);
-	public void lookupByName(String name, Continuation<PastContent, Exception> action);
-	public void lookupById(String location, String id, Continuation<InputStream, Exception> action);
+	public void lookupDHTById(String id, Continuation<PastContent, Exception> action);
+	public void lookupDHTByName(String name, Continuation<PastContent, Exception> action);
+	public void lookupCloudsById(String cloudLocation, String id, Continuation<InputStream, Exception> action);
 	public boolean addFriend(SocialProfile friend);
 	public Message sendMessage(String friendId, String msg);
 	public Message sendMessageToConversation(String conversationName, String msg);
@@ -36,7 +36,7 @@ public interface SocialService {
 	public void updateProfile(SocialProfile edittedProfile);
 	public SocialProfile getUserProfile();
 	public void pushProfileToDHT();
-	public void addCloudHandler(String cloudLocation, CloudStorageService cloudHandler);
+	public void addCloudHandler(String cloudLocation, CloudStorageService cloudHandler) throws UserRecoverableAuthIOException, IOException;
 	public void logout();
 
 }

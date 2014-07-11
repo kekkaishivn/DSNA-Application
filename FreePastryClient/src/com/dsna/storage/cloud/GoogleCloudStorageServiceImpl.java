@@ -42,8 +42,7 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 	public List<String> initializeDSNAFolders() throws UserRecoverableAuthIOException, IOException {
 		// TODO Auto-generated method stub
 		ArrayList<String> dsnaFolderIds = new ArrayList<String>();
-		String rootDSNAFolderId = queryFileId(
-				"mimeType='application/vnd.google-apps.folder' and trashed=false and title='DSNA' and properties has { key='rootId' and value='abdu1234' }");
+		String rootDSNAFolderId = queryFileId("'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='DSNA'");
 		if (rootDSNAFolderId==null)	{
 			Property rootProperty = new Property();
 			rootProperty.setKey("rootId");
@@ -51,8 +50,7 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 			rootDSNAFolderId = createFolder("DSNA", "DSNA Root Folder", null, Arrays.asList(rootProperty));
 		}
 		
-		String friendOnlyFolderId = queryFileId(
-				"mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly' and properties has { key='friendOnlyId' and value='ahue1348' }");
+		String friendOnlyFolderId = queryFileId("'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
 		if (friendOnlyFolderId==null)	{
 			Property friendOnlyProperty = new Property();
 			friendOnlyProperty.setKey("friendOnlyId");
@@ -61,7 +59,7 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 		}
 		
 		String publicFolderId = queryFileId(
-				"mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly' and properties has { key='publicId' and value='iuerq9384' }");
+				"'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
 		if (publicFolderId==null)	{
 			Property publicProperty = new Property();
 			publicProperty.setKey("publicId");
@@ -79,7 +77,7 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 		InputStream content) throws UserRecoverableAuthIOException, IOException {
 		// TODO Auto-generated method stub
   	Files.List request = service.files().list().setQ(
-        "mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
+        "'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
   	
   	FileList files = request.execute();
   	File friendOnlyFolder = (files.size()>0 ? files.getItems().get(0) : null);
@@ -90,7 +88,7 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 	public String uploadContentToPublicFolder(String title, String type, String description,
 		InputStream content) throws UserRecoverableAuthIOException, IOException {
   	Files.List request = service.files().list().setQ(
-        "mimeType='application/vnd.google-apps.folder' and trashed=false and title='Public'");
+        "'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='Public'");
   	
   	FileList files = request.execute();
   	File publicFolder = files.getItems().get(0);
@@ -198,6 +196,31 @@ public class GoogleCloudStorageServiceImpl implements CloudStorageService {
 	    }
 	  };
 	  thread.start();
+	}
+
+	@Override
+	public List<String> addPermissionToFriendFolder(List<String> userIds,
+			String type, String role) throws UserRecoverableAuthIOException,
+			IOException {
+
+		String friendOnlyFolderId = queryFileId("'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
+		if (friendOnlyFolderId!=null)	{
+			return addPermission(friendOnlyFolderId, userIds, type, role);
+		} else	{
+			this.initializeDSNAFolders();
+			friendOnlyFolderId = queryFileId("'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
+			return addPermission(friendOnlyFolderId, userIds, type, role);
+		}
+	}
+
+	@Override
+	public void removePermissionFromFriendFolder(String permissionId)
+			throws UserRecoverableAuthIOException, IOException {
+		// TODO Auto-generated method stub
+		String friendOnlyFolderId = queryFileId("'me' in owners and mimeType='application/vnd.google-apps.folder' and trashed=false and title='FriendOnly'");
+		if (friendOnlyFolderId!=null)	{
+			this.removePermission(friendOnlyFolderId, permissionId);
+		}		
 	}
 
 }

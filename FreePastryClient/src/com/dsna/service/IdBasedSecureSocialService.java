@@ -24,5 +24,5 @@ public interface IdBasedSecureSocialService extends SocialService {
 	public void changeAndDistributeSessionKey(String symmetricAlgorithm, CipherParameters publicKey, String[] ids, Continuation<KeyInfo, Exception> action);
 	public void changeAndDistributeSessionKey(String symmetricAlgorithm, CipherParameters publicKey, Continuation<KeyInfo, Exception> action);
 	public void setSessionKeyParameter(KeyInfo key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException;
-	
+	public void setPreferEncrypted(boolean preferEncrypted);
 }

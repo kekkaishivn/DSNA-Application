@@ -1,5 +1,6 @@
 package com.dsna.desktop.client.ui;
 
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.io.FileInputStream;
@@ -20,12 +21,16 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -45,6 +50,7 @@ import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.JTabbedPane;
 
@@ -81,10 +87,21 @@ import com.dsna.service.SocialService;
 import com.dsna.service.SocialServiceFactory;
 import com.dsna.service.SocialServiceImpl;
 import com.dsna.service.SocialEventListener;
+import com.dsna.storage.cloud.CloudStorageService;
+import com.dsna.storage.cloud.GoogleCloudStorageServiceImpl;
 import com.dsna.util.ASN1Util;
 import com.dsna.util.FileUtil;
 import com.dsna.util.NetworkUtil;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -135,6 +152,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	private boolean isSynchronizingProfile;
 	private HashMap<String,String> localFriendsContacts;
 	CipherParameters[] publicKeys;
+	private JTextArea textArea_CloudAuthentication;
 	
 	public ClientFrame() {
 		addWindowListener(new WindowAdapter() {
@@ -226,6 +244,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 					else
 						serviceHandler = factory.newDSNAIdBasedSecureSocialService(getBindPort(), getBootPort(), getBootAddress(), ClientFrame.this, user, lastSeqs);
 					System.out.println(serviceHandler);
+					serviceHandler.setPreferEncrypted(false);
 					updateAccountInfo();
 					serviceHandler.initSubscribe();
 					serviceHandler.pushProfileToDHT();
@@ -524,7 +543,14 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		JButton btnStore = new JButton("post");
 		btnStore.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				postStatus();
+				final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+				
+				Runnable postStatusTask = new Runnable()	{
+					public void run()	{
+						postStatus();
+					}
+				};
+				scheduler.scheduleAtFixedRate(postStatusTask, 10, 2, TimeUnit.SECONDS );
 			}
 		});
 		btnStore.setBounds(446, 169, 117, 29);
@@ -557,11 +583,61 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		JButton btnChangeSessionKey = new JButton("change sKey");
 		btnChangeSessionKey.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				distributeSessionKey();
+				//distributeSessionKey();
+				final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+				
+				Runnable postStatusTask = new Runnable()	{
+					public void run()	{
+						distributeSessionKey();
+					}
+				};
+				scheduler.scheduleAtFixedRate(postStatusTask, 10, 2, TimeUnit.SECONDS );
+				
 			}
 		});
 		btnChangeSessionKey.setBounds(274, 169, 175, 29);
 		panel_2.add(btnChangeSessionKey);
+		
+		JPanel panel_5 = new JPanel();
+		panel_5.setLayout(null);
+		tabbedPane.addTab("New tab", null, panel_5, null);
+		
+		textArea_CloudAuthentication = new JTextArea();
+		textArea_CloudAuthentication.setColumns(10);
+		textArea_CloudAuthentication.setBounds(428, 35, 319, 129);
+		panel_5.add(textArea_CloudAuthentication);
+		
+		JLabel lblTokenId = new JLabel("Token Id:");
+		lblTokenId.setBounds(357, 176, 73, 16);
+		panel_5.add(lblTokenId);
+		
+		JButton btnSubmit = new JButton("Submit");
+		btnSubmit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ClientFrame.this.confirmCloudToken();
+			}
+		});
+		btnSubmit.setBounds(630, 169, 117, 29);
+		panel_5.add(btnSubmit);
+		
+		JLabel label_13 = new JLabel("Bulletin:");
+		label_13.setBounds(357, 35, 73, 16);
+		panel_5.add(label_13);
+		
+		textField_cloudToken = new JTextField();
+		textField_cloudToken.setHorizontalAlignment(SwingConstants.RIGHT);
+		textField_cloudToken.setColumns(10);
+		textField_cloudToken.setBounds(436, 170, 182, 28);
+		panel_5.add(textField_cloudToken);
+		
+		JButton btnInitAuthenticate = new JButton("Init authenticate");
+		btnInitAuthenticate.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				initGoogleCloudAuthenticate();
+			}
+		});
+		btnInitAuthenticate.setBounds(594, 6, 153, 29);
+		panel_5.add(btnInitAuthenticate);
 	}
 	
 	public void addFriend(String friendId)	{
@@ -574,6 +650,50 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			listModel.removeElement(topic);
 			this.serviceHandler.unsubscribe(topic);
 		}
+	}
+
+	private static String CLIENT_ID = "74942622914-nlvoauooolp5dj9v3115krb0jma3susp.apps.googleusercontent.com";
+  private static String CLIENT_SECRET = "YgO1hBnqY_7GX3oVNdjm7VeJ";
+  private static String REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";	
+  GoogleAuthorizationCodeFlow flow;
+  
+	private void initGoogleCloudAuthenticate()	{
+		HttpTransport httpTransport = new NetHttpTransport();
+    JsonFactory jsonFactory = new GsonFactory();
+   
+    flow = new GoogleAuthorizationCodeFlow.Builder(
+        httpTransport, jsonFactory, CLIENT_ID, CLIENT_SECRET, Arrays.asList(DriveScopes.DRIVE))
+        .setAccessType("online")
+        .setApprovalPrompt("auto").build();
+    
+    String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
+    String txt = "Please open the following URL in your browser then type the authorization code:\n" + url;
+    textArea_CloudAuthentication.setText(txt);	
+	}
+	
+	private void confirmCloudToken()	{
+		HttpTransport httpTransport = new NetHttpTransport();
+    JsonFactory jsonFactory = new GsonFactory();
+    
+		String code = textField_cloudToken.getText();
+		GoogleTokenResponse response;
+		try {
+			System.out.println(code);
+			response = flow.newTokenRequest(code).setRedirectUri(REDIRECT_URI).execute();
+	    GoogleCredential credential = new GoogleCredential().setFromTokenResponse(response);
+	    
+	    //Create a new authorized API client
+	    Drive service = new Drive.Builder(httpTransport, jsonFactory, credential).build();
+	    CloudStorageService cloudTest = new GoogleCloudStorageServiceImpl(service);
+	    cloudTest.initializeDSNAFolders();
+	    
+	    this.serviceHandler.addCloudHandler(Location.GOOGLE_CLOUD.toString(), new GoogleCloudStorageServiceImpl(service));
+		} catch (IOException e) {
+			
+			JOptionPane.showMessageDialog(this, "Create service for cloud failed!");
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public int getBindPort()	{
@@ -608,9 +728,18 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 		}
 	}
 	
+	int count = 0;
 	private void postStatus() {
 		try {
+			count++;
 			serviceHandler.postStatus(textArea_Status.getText());
+			if (count==1000)	{
+				SwingUtilities.invokeLater(new Runnable()	{
+					public void run()	{
+						JOptionPane.showMessageDialog(ClientFrame.this, "Experiment done");
+					}
+				});
+			}
 		} catch (UserRecoverableAuthIOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -618,7 +747,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
-		textArea_Status.setText("");
+		//textArea_Status.setText("");
 	}
 	
 	private void fetchStatus()	{
@@ -626,7 +755,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	}
 	
 	private void fetchStatus(final String statusId)	{
-		serviceHandler.lookupById(statusId, new Continuation<PastContent, Exception>() {
+		serviceHandler.lookupDHTById(statusId, new Continuation<PastContent, Exception>() {
       public void receiveResult(PastContent result) {
     		if (result instanceof DSNAPastContent)	{
     			BaseEntity entity = ((DSNAPastContent)result).getContent();
@@ -645,7 +774,7 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	
 	private void findFriend()	{
 		
-		serviceHandler.lookupByName(textField_Contact_Username.getText(), new Continuation<PastContent, Exception>() {
+		serviceHandler.lookupDHTByName(textField_Contact_Username.getText(), new Continuation<PastContent, Exception>() {
       public void receiveResult(PastContent result) {
     		if (result instanceof DSNAPastContent)	{
     			BaseEntity entity = ((DSNAPastContent)result).getContent();
@@ -855,10 +984,11 @@ public class ClientFrame extends JFrame implements SocialEventListener {
 	}
 	
 	private KeyInfo currentSessionKey;
+	private JTextField textField_cloudToken;
 	private void distributeSessionKey() {
 		// TODO Auto-generated method stub
 		try {
-			
+			count++;
 			CipherParameters[] publicKeys = getPublicKeys();
 			serviceHandler.changeAndDistributeSessionKey(IdBasedSecureSocialService.AESAlgorithm ,publicKeys[1], new Continuation<KeyInfo, Exception>() {
         public void receiveResult(KeyInfo result) {          
@@ -871,6 +1001,15 @@ public class ClientFrame extends JFrame implements SocialEventListener {
         }
 			
 			});
+			
+			if (count==1000)	{
+				SwingUtilities.invokeLater(new Runnable()	{
+					public void run()	{
+						JOptionPane.showMessageDialog(ClientFrame.this, "Experiment session key done");
+					}
+				});
+			}			
+			
 		} catch (IOException | InvalidCertificateException | KeyManagementException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
